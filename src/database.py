@@ -146,6 +146,19 @@ def get_all_universities(conn):
         return cur.fetchall()
 
 
+def get_university_by_slug(conn, slug):
+    """Look up a university by slug matched against the domain column."""
+    sql = """
+        SELECT university_id, name
+        FROM amm.source_university
+        WHERE domain ILIKE %s
+        LIMIT 1
+    """
+    with conn.cursor() as cur:
+        cur.execute(sql, (f"%{slug}%",))
+        return cur.fetchone()
+
+
 def get_unprocessed_staging(conn, run_id=None):
     """Get staging rows that haven't been transformed yet."""
     sql = """
