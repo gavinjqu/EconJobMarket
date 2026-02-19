@@ -7,9 +7,12 @@ from src.utils import parse_year
 
 log = logging.getLogger(__name__)
 
+# Match "Position, Institution" but NOT "Postdoc at X, then Y" phrases
 _POSITION_SPLIT = re.compile(
     r"^((?:postdoc|post-doc|assistant professor|associate professor|"
-    r"lecturer|visiting|research fellow|economist)[^,]*),\s*(.+)$",
+    r"lecturer|visiting|research fellow|economist)"
+    r"(?:\s+(?:of|in)\s+[^,]*)?"  # allow "of Instruction" etc.
+    r"),\s*(.+)$",
     re.IGNORECASE,
 )
 

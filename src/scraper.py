@@ -11,6 +11,7 @@ Pipeline per university:
 """
 import logging
 import subprocess
+from contextlib import contextmanager
 
 from src.database import (
     get_conn, close_pool,
@@ -26,6 +27,17 @@ from src.utils import (
 from src.parsers import PARSERS
 
 log = logging.getLogger(__name__)
+
+# Base URLs for dry-run mode (no DB required)
+_DEFAULT_URLS = {
+    "harvard": "https://economics.harvard.edu/placement",
+    "stanford": "https://economics.stanford.edu/graduate/student-placement",
+}
+
+
+@contextmanager
+def _nullcontext():
+    yield None
 
 
 def _git_sha():
@@ -58,28 +70,41 @@ def _scrape_university(slug: str, dry_run: bool):
     parser_cls = PARSERS[slug]
     parser = parser_cls()
 
-    with get_conn() as conn:
-        university = get_university_by_slug(conn, slug)
-        if university is None:
-            log.error("No university with slug '%s'. Run seed data first.", slug)
-            return
-        university_id, university_name = university
+    university_id = university_name = run_id = None
+    pages = []
 
-        pages = get_pages_for_university(conn, university_id)
-        if not pages:
-            log.error("No source_page rows for %s (id=%d)", slug, university_id)
+    if dry_run:
+        url = _DEFAULT_URLS.get(slug)
+        if not url:
+            log.error("No default URL for slug '%s'", slug)
             return
+        pages = [(None, url, "placement", False)]
+    else:
+        with get_conn() as conn:
+            university = get_university_by_slug(conn, slug)
+            if university is None:
+                log.error("No university with slug '%s'. Run seed data first.",
+                          slug)
+                return
+            university_id, university_name = university
 
-        run_id = insert_ingest_run(conn, git_sha=_git_sha(),
-                                   notes=f"scrape:{slug}")
-        log.info("Created ingest_run %d", run_id)
+            pages = get_pages_for_university(conn, university_id)
+            if not pages:
+                log.error("No source_page rows for %s (id=%d)",
+                          slug, university_id)
+                return
+
+            run_id = insert_ingest_run(conn, git_sha=_git_sha(),
+                                       notes=f"scrape:{slug}")
+            log.info("Created ingest_run %d", run_id)
 
     # --- Phase 1: Fetch and parse ---
     all_parsed = []
 
-    with get_conn() as conn:
+    fetch_ctx = get_conn() if not dry_run else _nullcontext()
+    with fetch_ctx as conn:
         for page_id, url, page_type, is_dynamic in pages:
-            log.info("Fetching page_id=%d url=%s", page_id, url)
+            log.info("Fetching page_id=%s url=%s", page_id, url)
             current_url = url
 
             while current_url:
