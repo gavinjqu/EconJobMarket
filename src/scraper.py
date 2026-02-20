@@ -20,7 +20,7 @@ from src.database import (
     insert_ingest_run, finish_ingest_run,
     insert_raw_fetch, insert_stg_placement, insert_placement,
     get_pages_for_university, get_unprocessed_staging,
-    get_university_by_slug,
+    get_university_by_slug, get_university_by_name,
 )
 from src.utils import (
     fetch_url, body_hash, clean_name, clean_field, clean_text,
@@ -75,45 +75,68 @@ def run_scraper(target: str, dry_run: bool = False):
             close_pool()
 
 
+def _get_config_row(slug: str) -> dict | None:
+    """Return the full config row for a slug from universities.csv."""
+    if not _CONFIG.exists():
+        return None
+    with open(_CONFIG, newline="") as f:
+        for row in csv.DictReader(f):
+            if row["slug"] == slug:
+                return row
+    return None
+
+
 def _scrape_university(slug: str, dry_run: bool):
     parser_cls = PARSERS[slug]
     parser = parser_cls()
 
     university_id = university_name = run_id = None
-    pages = []
+    page_id = None
 
-    if dry_run:
+    # Always get URL from config (single source of truth)
+    config_row = _get_config_row(slug)
+    url = config_row["placement_url"] if config_row else None
+    if not url:
         url = _get_placement_url(slug)
-        if not url:
-            log.error("No placement URL for slug '%s' in config", slug)
-            return
-        pages = [(None, url, "placement", False)]
-    else:
+    if not url:
+        log.error("No placement URL for slug '%s' in config", slug)
+        return
+
+    pages = [(None, url, "placement", False)]
+
+    if not dry_run:
         with get_conn() as conn:
-            university = get_university_by_slug(conn, slug)
+            # Try to find university by name first, then by slug
+            university = None
+            if config_row:
+                university = get_university_by_name(conn, config_row["name"])
+            if university is None:
+                university = get_university_by_slug(conn, slug)
             if university is None:
                 log.error("No university with slug '%s'. Run seed data first.",
                           slug)
                 return
             university_id, university_name = university
 
-            pages = get_pages_for_university(conn, university_id)
-            if not pages:
-                log.error("No source_page rows for %s (id=%d)",
-                          slug, university_id)
-                return
+            # Use source_page if available (for page_id tracking)
+            db_pages = get_pages_for_university(conn, university_id)
+            if db_pages:
+                # Use the first page_id for raw_fetch tracking
+                page_id = db_pages[0][0]
 
             run_id = insert_ingest_run(conn, git_sha=_git_sha(),
                                        notes=f"scrape:{slug}")
-            log.info("Created ingest_run %d", run_id)
+            log.info("Created ingest_run %d for %s", run_id, university_name)
 
     # --- Phase 1: Fetch and parse ---
     all_parsed = []
 
     fetch_ctx = get_conn() if not dry_run else _nullcontext()
     with fetch_ctx as conn:
-        for page_id, url, page_type, is_dynamic in pages:
-            log.info("Fetching page_id=%s url=%s", page_id, url)
+        for _pid, url, page_type, is_dynamic in pages:
+            # Use DB page_id if available, otherwise fall back to pages list
+            effective_page_id = page_id if page_id is not None else _pid
+            log.info("Fetching page_id=%s url=%s", effective_page_id, url)
             current_url = url
 
             while current_url:
@@ -129,7 +152,7 @@ def _scrape_university(slug: str, dry_run: bool):
 
                 if not dry_run:
                     fetch_id = insert_raw_fetch(
-                        conn, run_id, page_id,
+                        conn, run_id, effective_page_id,
                         status, ctype, html,
                         body_hash(html) if html else None,
                         error,
@@ -143,7 +166,7 @@ def _scrape_university(slug: str, dry_run: bool):
                     except Exception:
                         log.exception("Parse failed for %s", current_url)
                         parsed_rows = []
-                    all_parsed.append((page_id, fetch_id, parsed_rows))
+                    all_parsed.append((effective_page_id, fetch_id, parsed_rows))
                     log.info("Parsed %d rows from %s",
                              len(parsed_rows), current_url)
 

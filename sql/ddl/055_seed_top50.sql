@@ -34,7 +34,7 @@ VALUES
     ('Vanderbilt University', 'as.vanderbilt.edu/econ', 'US', 'TN'),
     ('University of Rochester', 'sas.rochester.edu/eco', 'US', 'NY'),
     ('University of Notre Dame', 'economics.nd.edu', 'US', 'IN'),
-    ('Carnegie Mellon University', 'cmu.edu/dietrich/economics', 'US', 'PA'),
+    ('Carnegie Mellon University', 'cmu.edu/tepper', 'US', 'PA'),
     ('Pennsylvania State University', 'econ.psu.edu', 'US', 'PA'),
     ('Ohio State University', 'economics.osu.edu', 'US', 'OH'),
     ('Michigan State University', 'econ.msu.edu', 'US', 'MI'),
@@ -57,6 +57,9 @@ VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Seed: source_page (placement URLs)
+-- First, remove old source_page entries so we can re-insert with updated URLs
+DELETE FROM amm.source_page WHERE page_type = 'placement';
+
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
        'https://economics.harvard.edu/placement',
@@ -75,7 +78,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.mit.edu/people/phd-students/job-market-candidates',
+       'https://economics.mit.edu/academic-programs/phd-program/job-market',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Massachusetts Institute of Technology'
@@ -83,7 +86,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.princeton.edu/graduate-program/job-market/',
+       'https://economics.princeton.edu/graduate-program/job-market-and-placements/statistics-on-past-placements/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Princeton University'
@@ -91,7 +94,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.yale.edu/graduate/placement',
+       'https://economics.yale.edu/phd-program/placement/outcomes',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Yale University'
@@ -99,7 +102,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://www.econ.berkeley.edu/grad/placement',
+       'https://econ.berkeley.edu/graduate/program/recent-outcomes',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of California Berkeley'
@@ -107,7 +110,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.uchicago.edu/people/students/placements',
+       'https://economics.uchicago.edu/phd-program/career-placement',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Chicago'
@@ -123,7 +126,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.northwestern.edu/graduate/prospective/placement-history.html',
+       'https://economics.northwestern.edu/graduate/prospective/placement.html',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Northwestern University'
@@ -139,7 +142,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.sas.upenn.edu/graduate/placement',
+       'https://economics.sas.upenn.edu/graduate/prospective-students/placement-information',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Pennsylvania'
@@ -147,7 +150,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://lsa.umich.edu/econ/doctoral-program/placements.html',
+       'https://lsa.umich.edu/econ/doctoral-program/past-job-market-placements.html',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Michigan'
@@ -155,7 +158,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.ucla.edu/graduate/placements/',
+       'https://economics.ucla.edu/graduate/graduate-profiles/graduate-placement-history/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of California Los Angeles'
@@ -163,7 +166,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://cla.umn.edu/economics/graduate/placement-records',
+       'https://cla.umn.edu/economics/graduate/job-placement-achievements',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Minnesota'
@@ -171,7 +174,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://econ.duke.edu/phd-program/placement',
+       'https://econ.duke.edu/phd-program/prospective-students/placements',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Duke University'
@@ -179,7 +182,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.cornell.edu/job-placements',
+       'https://economics.cornell.edu/historical-placement-phd-students',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Cornell University'
@@ -187,7 +190,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.ucsd.edu/graduate-program/placement.html',
+       'https://economics.ucsd.edu/graduate-program/jobmarket-tab/placement-history.html',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of California San Diego'
@@ -195,7 +198,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://econ.wisc.edu/doctoral/placement/',
+       'https://econ.wisc.edu/doctoral/career-placement/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Wisconsin-Madison'
@@ -203,7 +206,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.brown.edu/academics/graduate/placement',
+       'https://economics.brown.edu/academics/graduate/job-placement-results',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Brown University'
@@ -211,7 +214,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://econ.umd.edu/graduate/placement',
+       'https://www.econ.umd.edu/graduate/job-placement',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Maryland'
@@ -219,7 +222,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://www.bu.edu/econ/phd/placements/',
+       'https://www.bu.edu/econ/academics/phd/recent-phd-placements/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Boston University'
@@ -227,7 +230,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://econ.jhu.edu/graduate/placement-record/',
+       'https://econ.jhu.edu/graduate/recent-placements/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Johns Hopkins University'
@@ -235,7 +238,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.wustl.edu/graduate-placement-record',
+       'https://economics.wustl.edu/job-market-and-placement',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Washington University in St. Louis'
@@ -243,7 +246,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.virginia.edu/placement',
+       'https://economics.virginia.edu/placement-history',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Virginia'
@@ -251,7 +254,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://liberalarts.utexas.edu/economics/phd/job-market.html',
+       'https://liberalarts.utexas.edu/economics/ph-d-program/ph-d-career-outcomes/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Texas at Austin'
@@ -259,7 +262,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://www.bc.edu/bc-web/schools/morrissey/departments/economics/graduate/placement-record.html',
+       'https://www.bc.edu/bc-web/schools/mcas/departments/economics/graduate/placements.html',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Boston College'
@@ -267,7 +270,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://dornsife.usc.edu/economics/phd-placements/',
+       'https://dornsife.usc.edu/econ/doctoral/placements/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Southern California'
@@ -275,7 +278,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://www.vanderbilt.edu/econ/graduate/placement.php',
+       'https://as.vanderbilt.edu/economics/phd-placements/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Vanderbilt University'
@@ -291,7 +294,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.nd.edu/graduate-program/job-placements/',
+       'https://economics.nd.edu/graduate/placements/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Notre Dame'
@@ -299,7 +302,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://www.cmu.edu/dietrich/economics/graduate/placements.html',
+       'https://www.cmu.edu/tepper/programs/phd/job-market',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Carnegie Mellon University'
@@ -307,7 +310,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://econ.la.psu.edu/ph-d-program/placements/',
+       'https://econ.la.psu.edu/ph-d-program/initial-placements-of-ph-d-graduates/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Pennsylvania State University'
@@ -315,7 +318,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.osu.edu/graduate/placement',
+       'https://economics.osu.edu/phd-placement-history',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Ohio State University'
@@ -323,7 +326,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://econ.msu.edu/academics/graduate/placements',
+       'https://econ.msu.edu/academics/graduate/past-jobs',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Michigan State University'
@@ -331,7 +334,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.illinois.edu/academics/phd-program/placements',
+       'https://economics.illinois.edu/academics/phd-program/phd-placements-year-employer',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Illinois Urbana-Champaign'
@@ -339,7 +342,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.georgetown.edu/graduate/placement/',
+       'https://econ.georgetown.edu/academics/phd/alumni/recent-placements/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Georgetown University'
@@ -347,7 +350,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://www.econ.pitt.edu/graduate/placement',
+       'https://www.econ.pitt.edu/doctoral/career-outcomes-history',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Pittsburgh'
@@ -355,7 +358,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.ucdavis.edu/graduate-program/placements',
+       'https://economics.ucdavis.edu/graduate-student-placements',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of California Davis'
@@ -363,7 +366,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.emory.edu/graduate/placements.html',
+       'https://economics.emory.edu/doctoral/alumni-job-placement.html',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Emory University'
@@ -371,7 +374,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.uiowa.edu/graduate-program/placements',
+       'https://tippie.uiowa.edu/phd/phd-economics',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Iowa'
@@ -379,7 +382,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://www.economics.uci.edu/grad/placements.php',
+       'https://www.economics.uci.edu/grad/placement.php',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of California Irvine'
@@ -387,7 +390,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.asu.edu/phd-placements',
+       'https://wpcarey.asu.edu/economics-degrees/placement',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Arizona State University'
@@ -395,7 +398,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.rice.edu/graduate/placement-record',
+       'https://economics.rice.edu/graduate-program/phd/recent-placements',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Rice University'
@@ -403,7 +406,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://econ.unc.edu/graduate/placements/',
+       'https://econ.unc.edu/recent-placements/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of North Carolina Chapel Hill'
@@ -411,7 +414,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.indiana.edu/graduate/placement.html',
+       'https://economics.indiana.edu/graduate/job-placement-by-year.html',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Indiana University'
@@ -419,7 +422,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.rutgers.edu/graduate/placement-record',
+       'https://economics.rutgers.edu/academics/graduate/graduate-placements',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Rutgers University'
@@ -427,7 +430,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://krannert.purdue.edu/academics/economics/graduate/placement.php',
+       'https://www.business.purdue.edu/phd/programs/economics/program.php',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'Purdue University'
@@ -435,7 +438,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://economics.clas.ufl.edu/graduate/placement/',
+       'https://economics.clas.ufl.edu/people/alumni/',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'University of Florida'
@@ -443,7 +446,7 @@ ON CONFLICT (university_id, page_type, url) DO NOTHING;
 
 INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
-       'https://www.hss.caltech.edu/academics/economics/phd-placements',
+       'https://www.hss.caltech.edu/graduate-studies/alumni',
        FALSE, TRUE
 FROM amm.source_university u
 WHERE u.name = 'California Institute of Technology'
