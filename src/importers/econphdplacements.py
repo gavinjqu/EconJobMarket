@@ -22,7 +22,7 @@ from src.database import (
     insert_stg_placement,
     insert_placement,
     get_unprocessed_staging,
-    get_university_by_slug,
+    get_university_by_name,
 )
 from src.utils import clean_name, clean_field, clean_text, classify_sector, detect_postdoc
 
@@ -73,13 +73,16 @@ def _download_jsonl() -> pathlib.Path:
 def _resolve_university_ids(conn, config: dict) -> dict[str, tuple[int, str]]:
     """Map external department_id → (university_id, name) from our DB.
 
+    Uses the university name from config for an exact match against the DB.
     Only includes slugs that exist in both our config and the database.
     """
     mapping = {}
-    for slug in config:
-        result = get_university_by_slug(conn, slug)
+    for slug, row in config.items():
+        result = get_university_by_name(conn, row["name"])
         if result:
             mapping[slug] = result
+        else:
+            log.debug("No DB entry for '%s' (%s)", slug, row["name"])
     return mapping
 
 

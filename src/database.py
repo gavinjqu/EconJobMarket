@@ -159,6 +159,19 @@ def get_university_by_slug(conn, slug):
         return cur.fetchone()
 
 
+def get_university_by_name(conn, name):
+    """Look up a university by exact name."""
+    sql = """
+        SELECT university_id, name
+        FROM amm.source_university
+        WHERE name = %s
+        LIMIT 1
+    """
+    with conn.cursor() as cur:
+        cur.execute(sql, (name,))
+        return cur.fetchone()
+
+
 def get_unprocessed_staging(conn, run_id=None):
     """Get staging rows that haven't been transformed yet.
 
