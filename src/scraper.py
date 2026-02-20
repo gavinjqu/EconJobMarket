@@ -9,7 +9,9 @@ Pipeline per university:
   5. Transform staging -> core placement rows
   6. Finish the ingest_run
 """
+import csv
 import logging
+import pathlib
 import subprocess
 from contextlib import contextmanager
 
@@ -28,11 +30,18 @@ from src.parsers import PARSERS
 
 log = logging.getLogger(__name__)
 
-# Base URLs for dry-run mode (no DB required)
-_DEFAULT_URLS = {
-    "harvard": "https://economics.harvard.edu/placement",
-    "stanford": "https://economics.stanford.edu/graduate/student-placement",
-}
+_CONFIG = pathlib.Path(__file__).resolve().parent.parent / "config" / "universities.csv"
+
+
+def _get_placement_url(slug: str) -> str | None:
+    """Look up the placement URL for a slug from config/universities.csv."""
+    if not _CONFIG.exists():
+        return None
+    with open(_CONFIG, newline="") as f:
+        for row in csv.DictReader(f):
+            if row["slug"] == slug:
+                return row["placement_url"] or None
+    return None
 
 
 @contextmanager
@@ -74,9 +83,9 @@ def _scrape_university(slug: str, dry_run: bool):
     pages = []
 
     if dry_run:
-        url = _DEFAULT_URLS.get(slug)
+        url = _get_placement_url(slug)
         if not url:
-            log.error("No default URL for slug '%s'", slug)
+            log.error("No placement URL for slug '%s' in config", slug)
             return
         pages = [(None, url, "placement", False)]
     else:

@@ -160,15 +160,18 @@ def get_university_by_slug(conn, slug):
 
 
 def get_unprocessed_staging(conn, run_id=None):
-    """Get staging rows that haven't been transformed yet."""
+    """Get staging rows that haven't been transformed yet.
+
+    Uses LEFT JOIN on raw_fetch so that imported rows (fetch_id IS NULL)
+    are included.  The run_id filter only applies when fetch_id is present.
+    """
     sql = """
         SELECT s.stg_placement_id, s.fetch_id, s.university_id,
                s.raw_name, s.raw_field, s.raw_placement,
                s.raw_position, s.raw_sector, s.graduation_year,
                u.name AS university_name
         FROM amm.stg_placement s
-        JOIN amm.raw_fetch f ON f.fetch_id = s.fetch_id
-        JOIN amm.source_page p ON p.page_id = f.page_id
+        LEFT JOIN amm.raw_fetch f ON f.fetch_id = s.fetch_id
         JOIN amm.source_university u ON u.university_id = s.university_id
         WHERE s.parse_error IS NULL
           AND NOT EXISTS (
@@ -178,7 +181,7 @@ def get_unprocessed_staging(conn, run_id=None):
     """
     params = []
     if run_id is not None:
-        sql += " AND f.run_id = %s"
+        sql += " AND (s.fetch_id IS NULL OR f.run_id = %s)"
         params.append(run_id)
     sql += " ORDER BY s.stg_placement_id"
     with conn.cursor() as cur:
