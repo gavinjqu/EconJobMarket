@@ -1,7 +1,7 @@
 slug,name,domain,state,placement_url,in_external_dataset
 harvard,Harvard University,economics.harvard.edu,MA,https://economics.harvard.edu/placement,yes
 stanford,Stanford University,economics.stanford.edu,CA,https://economics.stanford.edu/graduate/student-placement,yes
-mit,Massachusetts Institute of Technology,economics.mit.edu,MA,https://economics.mit.edu/people/phd-students/job-market-candidates,no
+mit,Massachusetts Institute of Technology,economics.mit.edu,MA,https://economics.mit.edu/academic-programs/phd-program/job-market,no
 princeton,Princeton University,economics.princeton.edu,NJ,https://economics.princeton.edu/graduate-program/job-market/,yes
 yale,Yale University,economics.yale.edu,CT,https://economics.yale.edu/graduate/placement,yes
 berkeley,University of California Berkeley,econ.berkeley.edu,CA,https://www.econ.berkeley.edu/grad/placement,yes
