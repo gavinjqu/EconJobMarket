@@ -5,9 +5,11 @@ Year, Institution, Position/Title, Field. Note: candidate names are
 not published on this page.
 """
 
-import re
 import logging
+import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 
 log = logging.getLogger(__name__)
@@ -45,16 +47,17 @@ class PrincetonParser(BasePlacementParser):
             if not raw_placement:
                 continue
 
-            rows.append(PlacementRow(
-                raw_name=f"Princeton PhD ({year_text})",  # no names published
-                raw_field=raw_field,
-                raw_placement=raw_placement,
-                raw_position=raw_position,
-                graduation_year=year,
-                row_index=global_index,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=f"Princeton PhD ({year_text})",  # no names published
+                    raw_field=raw_field,
+                    raw_placement=raw_placement,
+                    raw_position=raw_position,
+                    graduation_year=year,
+                    row_index=global_index,
+                )
+            )
             global_index += 1
 
-        log.info("Parsed %d placement rows from Princeton (no candidate names)",
-                 len(rows))
+        log.info("Parsed %d placement rows from Princeton (no candidate names)", len(rows))
         return rows

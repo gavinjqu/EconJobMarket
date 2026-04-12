@@ -7,9 +7,10 @@ Placement destinations are not available until the PDF is updated post-season.
 """
 
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
-from src.utils import parse_year
 
 log = logging.getLogger(__name__)
 
@@ -43,20 +44,24 @@ class MITParser(BasePlacementParser):
                     continue
                 if child.name == "br":
                     continue
-                text = child.get_text(strip=True) if hasattr(child, "get_text") else str(child).strip()
+                text = (
+                    child.get_text(strip=True) if hasattr(child, "get_text") else str(child).strip()
+                )
                 if text:
                     fields.append(text)
 
             raw_field = "; ".join(fields) if fields else None
 
-            rows.append(PlacementRow(
-                raw_name=raw_name,
-                raw_field=raw_field,
-                raw_placement=None,
-                raw_position=None,
-                graduation_year=None,
-                row_index=global_index,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=raw_name,
+                    raw_field=raw_field,
+                    raw_placement=None,
+                    raw_position=None,
+                    graduation_year=None,
+                    row_index=global_index,
+                )
+            )
             global_index += 1
 
         log.info("Parsed %d candidates from MIT job market page", len(rows))

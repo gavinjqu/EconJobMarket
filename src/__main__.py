@@ -1,11 +1,12 @@
 """CLI entry point: python -m src <command> [args]"""
+
 import argparse
 import csv
 import logging
 import pathlib
 
-from src.scraper import run_scraper
 from src.parsers import PARSERS
+from src.scraper import run_scraper
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +42,8 @@ def main():
         help="University slug or 'all'",
     )
     sp_scrape.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Fetch and parse but do not write to database",
     )
 
@@ -53,7 +55,8 @@ def main():
         help="Data source to import, or 'gap-report'",
     )
     sp_import.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Show what would be imported without DB writes",
     )
 
@@ -67,11 +70,13 @@ def main():
         help="University slug to generate parser for",
     )
     sp_gen.add_argument(
-        "--url", default=None,
+        "--url",
+        default=None,
         help="Override placement page URL",
     )
     sp_gen.add_argument(
-        "--batch", action="store_true",
+        "--batch",
+        action="store_true",
         help="Generate parsers for all uncovered schools",
     )
 
@@ -81,36 +86,39 @@ def main():
         slug = args.university
         if slug != "all" and slug not in PARSERS:
             parser.error(
-                f"Unknown parser '{slug}'. "
-                f"Available: {', '.join(sorted(PARSERS))} or 'all'"
+                f"Unknown parser '{slug}'. Available: {', '.join(sorted(PARSERS))} or 'all'"
             )
         run_scraper(slug, dry_run=args.dry_run)
 
     elif args.command == "import":
         if args.source == "econphdplacements":
             from src.importers.econphdplacements import run_import
+
             run_import(dry_run=args.dry_run)
         elif args.source == "gap-report":
             from src.importers.gap_report import run_gap_report
+
             run_gap_report()
 
     elif args.command == "init-db":
         from src.database import init_db
+
         init_db()
         log.info("Database initialized at data/placements.db")
 
     elif args.command == "generate":
         if args.batch:
             from src.tools.batch_generate import run_batch
+
             run_batch()
         else:
             config_slugs = _load_config_slugs()
             if args.university not in config_slugs:
                 parser.error(
-                    f"Unknown university '{args.university}'. "
-                    f"Must be in config/universities.csv"
+                    f"Unknown university '{args.university}'. Must be in config/universities.csv"
                 )
             from src.tools.generate_parser import generate_parser
+
             generate_parser(args.university, url_override=args.url)
 
 

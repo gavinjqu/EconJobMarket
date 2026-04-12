@@ -5,7 +5,9 @@ BU lists placements by year (h3 headings) with tables where columns are
 """
 
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -41,14 +43,16 @@ class BostonUParser(BasePlacementParser):
                     if not raw_name:
                         continue
 
-                    rows.append(PlacementRow(
-                        raw_name=raw_name,
-                        raw_field=None,
-                        raw_placement=raw_placement,
-                        raw_position=None,
-                        graduation_year=current_year,
-                        row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name=raw_name,
+                            raw_field=None,
+                            raw_placement=raw_placement,
+                            raw_position=None,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
         log.info("Parsed %d placement rows from Boston University", len(rows))

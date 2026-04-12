@@ -7,6 +7,7 @@ the external dataset import.
 """
 
 import logging
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 
 log = logging.getLogger(__name__)
@@ -16,6 +17,5 @@ class PittsburghParser(BasePlacementParser):
     university_slug = "pittsburgh"
 
     def parse(self, html: str, page_url: str) -> list[PlacementRow]:
-        log.info("Pittsburgh placement page has PDF link only; "
-                 "no inline data to parse")
+        log.info("Pittsburgh placement page has PDF link only; no inline data to parse")
         return []

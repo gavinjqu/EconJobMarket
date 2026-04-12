@@ -5,7 +5,9 @@ Name, Year, Initial Placement, Current Position.
 """
 
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -43,14 +45,16 @@ class BostonCollegeParser(BasePlacementParser):
             if len(tds) >= 4:
                 raw_position = tds[3].get_text(strip=True) or None
 
-            rows.append(PlacementRow(
-                raw_name=raw_name,
-                raw_field=None,
-                raw_placement=raw_placement,
-                raw_position=raw_position,
-                graduation_year=year,
-                row_index=global_index,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=raw_name,
+                    raw_field=None,
+                    raw_placement=raw_placement,
+                    raw_position=raw_position,
+                    graduation_year=year,
+                    row_index=global_index,
+                )
+            )
             global_index += 1
 
         log.info("Parsed %d placement rows from Boston College", len(rows))

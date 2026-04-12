@@ -10,8 +10,9 @@ Two sub-formats exist:
 """
 
 import logging
-import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -69,14 +70,16 @@ class VanderbiltParser(BasePlacementParser):
                             placement = next_p.get_text(strip=True)
                             i += 1
 
-                rows.append(PlacementRow(
-                    raw_name=name,
-                    raw_field=None,
-                    raw_placement=placement,
-                    raw_position=None,
-                    graduation_year=year,
-                    row_index=idx,
-                ))
+                rows.append(
+                    PlacementRow(
+                        raw_name=name,
+                        raw_field=None,
+                        raw_placement=placement,
+                        raw_position=None,
+                        graduation_year=year,
+                        row_index=idx,
+                    )
+                )
                 idx += 1
                 i += 1
 

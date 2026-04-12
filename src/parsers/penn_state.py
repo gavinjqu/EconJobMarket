@@ -7,7 +7,9 @@ and content (div.jet-toggle__content) with alternating
 """
 
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -37,7 +39,6 @@ class PennStateParser(BasePlacementParser):
 
             # Content has alternating strong (name) and p (position) tags
             strongs = content.find_all("strong")
-            ps = content.find_all("p")
 
             # Build name→placement pairs from strong tags
             # Each strong is a name, the next p (non-name) is placement
@@ -62,14 +63,16 @@ class PennStateParser(BasePlacementParser):
                     raw_position = parts[0].strip() or None
                     raw_placement = parts[1].strip() or None
 
-                rows.append(PlacementRow(
-                    raw_name=raw_name,
-                    raw_field=None,
-                    raw_placement=raw_placement,
-                    raw_position=raw_position,
-                    graduation_year=year,
-                    row_index=global_index,
-                ))
+                rows.append(
+                    PlacementRow(
+                        raw_name=raw_name,
+                        raw_field=None,
+                        raw_placement=raw_placement,
+                        raw_position=raw_position,
+                        graduation_year=year,
+                        row_index=global_index,
+                    )
+                )
                 global_index += 1
 
         log.info("Parsed %d placement rows from Penn State", len(rows))

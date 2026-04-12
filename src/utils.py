@@ -1,9 +1,8 @@
+import hashlib
+import logging
+import random
 import re
 import time
-import random
-import logging
-import hashlib
-from functools import wraps
 
 import requests
 
@@ -41,8 +40,9 @@ def fetch_url(url, max_retries=3):
             return resp
         except requests.RequestException as e:
             wait = 2 ** (attempt + 1)
-            log.warning("Fetch %s attempt %d failed: %s — retrying in %ds",
-                        url, attempt + 1, e, wait)
+            log.warning(
+                "Fetch %s attempt %d failed: %s — retrying in %ds", url, attempt + 1, e, wait
+            )
             if attempt < max_retries - 1:
                 time.sleep(wait)
             else:
@@ -98,20 +98,54 @@ def classify_sector(text):
     if not text:
         return "other"
     low = text.lower()
-    gov_kw = ["federal reserve", "fed ", "imf", "world bank", "treasury",
-              "government", "bureau", "census", "congressional",
-              "council of economic", "national bureau"]
+    gov_kw = [
+        "federal reserve",
+        "fed ",
+        "imf",
+        "world bank",
+        "treasury",
+        "government",
+        "bureau",
+        "census",
+        "congressional",
+        "council of economic",
+        "national bureau",
+    ]
     if any(kw in low for kw in gov_kw):
         return "government"
-    acad_kw = ["university", "college", "institute", "school of",
-               "département", "department", "faculty", "professor",
-               "postdoc", "post-doc"]
+    acad_kw = [
+        "university",
+        "college",
+        "institute",
+        "school of",
+        "département",
+        "department",
+        "faculty",
+        "professor",
+        "postdoc",
+        "post-doc",
+    ]
     if any(kw in low for kw in acad_kw):
         return "academic"
-    private_kw = ["consulting", "capital", "bank", "amazon", "google",
-                  "microsoft", "meta", "apple", "mckinsey", "deloitte",
-                  "goldman", "morgan stanley", "jpmorgan", "citadel",
-                  "uber", "airbnb", "netflix"]
+    private_kw = [
+        "consulting",
+        "capital",
+        "bank",
+        "amazon",
+        "google",
+        "microsoft",
+        "meta",
+        "apple",
+        "mckinsey",
+        "deloitte",
+        "goldman",
+        "morgan stanley",
+        "jpmorgan",
+        "citadel",
+        "uber",
+        "airbnb",
+        "netflix",
+    ]
     if any(kw in low for kw in private_kw):
         return "private"
     return "other"

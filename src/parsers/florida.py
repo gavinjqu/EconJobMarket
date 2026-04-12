@@ -5,7 +5,9 @@ Florida lists alumni by year with h3 headings, followed by <ul> with
 """
 
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -47,14 +49,16 @@ class FloridaParser(BasePlacementParser):
                     # Clean leading/trailing punctuation
                     raw_placement = raw_placement.strip(",;– ") or None
 
-                    rows.append(PlacementRow(
-                        raw_name=raw_name,
-                        raw_field=None,
-                        raw_placement=raw_placement,
-                        raw_position=None,
-                        graduation_year=current_year,
-                        row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name=raw_name,
+                            raw_field=None,
+                            raw_placement=raw_placement,
+                            raw_position=None,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
         log.info("Parsed %d placement rows from Florida", len(rows))

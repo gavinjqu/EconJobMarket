@@ -4,9 +4,11 @@ Yale lists placements by year with h2/h3 headings (e.g. "2024-25"),
 followed by multiple 2-column tables: Name (bold), Placement.
 """
 
-import re
 import logging
+import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 
 log = logging.getLogger(__name__)
@@ -42,14 +44,16 @@ class YaleParser(BasePlacementParser):
                     if not raw_name:
                         continue
 
-                    rows.append(PlacementRow(
-                        raw_name=raw_name,
-                        raw_field=None,
-                        raw_placement=raw_placement,
-                        raw_position=None,
-                        graduation_year=current_year,
-                        row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name=raw_name,
+                            raw_field=None,
+                            raw_placement=raw_placement,
+                            raw_position=None,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
         log.info("Parsed %d placement rows from Yale", len(rows))

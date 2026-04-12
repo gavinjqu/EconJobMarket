@@ -6,7 +6,9 @@ For 2024 and earlier, tables have columns: Name, Job Placement, Area.
 """
 
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -36,7 +38,9 @@ class MarylandParser(BasePlacementParser):
 
                 # Check header to determine format
                 header = trs[0]
-                header_cells = [c.get_text(strip=True).lower() for c in header.find_all(["th", "td"])]
+                header_cells = [
+                    c.get_text(strip=True).lower() for c in header.find_all(["th", "td"])
+                ]
 
                 if any("name" in h for h in header_cells):
                     # Named columns: Name, Job Placement, Area
@@ -51,14 +55,16 @@ class MarylandParser(BasePlacementParser):
                         raw_field = None
                         if len(tds) >= 3:
                             raw_field = tds[2].get_text(strip=True) or None
-                        rows.append(PlacementRow(
-                            raw_name=raw_name,
-                            raw_field=raw_field,
-                            raw_placement=raw_placement,
-                            raw_position=None,
-                            graduation_year=current_year,
-                            row_index=global_index,
-                        ))
+                        rows.append(
+                            PlacementRow(
+                                raw_name=raw_name,
+                                raw_field=raw_field,
+                                raw_placement=raw_placement,
+                                raw_position=None,
+                                graduation_year=current_year,
+                                row_index=global_index,
+                            )
+                        )
                         global_index += 1
                 else:
                     # Category-only format: header is category, rows are placements
@@ -70,14 +76,16 @@ class MarylandParser(BasePlacementParser):
                         raw_placement = tds[0].get_text(strip=True) or None
                         if not raw_placement:
                             continue
-                        rows.append(PlacementRow(
-                            raw_name=None,
-                            raw_field=category,
-                            raw_placement=raw_placement,
-                            raw_position=None,
-                            graduation_year=current_year,
-                            row_index=global_index,
-                        ))
+                        rows.append(
+                            PlacementRow(
+                                raw_name=None,
+                                raw_field=category,
+                                raw_placement=raw_placement,
+                                raw_position=None,
+                                graduation_year=current_year,
+                                row_index=global_index,
+                            )
+                        )
                         global_index += 1
 
         log.info("Parsed %d placement rows from Maryland", len(rows))

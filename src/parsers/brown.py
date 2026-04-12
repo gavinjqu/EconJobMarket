@@ -6,7 +6,9 @@ or "Name -Institution, Position".
 
 import logging
 import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -34,7 +36,7 @@ class BrownParser(BasePlacementParser):
                 continue
 
             # Check if this looks like a placement entry: "Name-Institution"
-            match = re.match(r'^([A-Z][^-–—]+?)\s*[-–—]\s*(.+)$', text)
+            match = re.match(r"^([A-Z][^-–—]+?)\s*[-–—]\s*(.+)$", text)
             if not match:
                 continue
 
@@ -45,17 +47,21 @@ class BrownParser(BasePlacementParser):
                 continue
 
             # Skip nav/footer text
-            if any(kw in raw_name.lower() for kw in ['brown university', 'department', 'copyright']):
+            if any(
+                kw in raw_name.lower() for kw in ["brown university", "department", "copyright"]
+            ):
                 continue
 
-            rows.append(PlacementRow(
-                raw_name=raw_name,
-                raw_field=None,
-                raw_placement=raw_placement or None,
-                raw_position=None,
-                graduation_year=current_year,
-                row_index=global_index,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=raw_name,
+                    raw_field=None,
+                    raw_placement=raw_placement or None,
+                    raw_position=None,
+                    graduation_year=current_year,
+                    row_index=global_index,
+                )
+            )
             global_index += 1
 
         log.info("Parsed %d placement rows from Brown", len(rows))

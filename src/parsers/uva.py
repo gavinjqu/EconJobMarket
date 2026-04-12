@@ -9,7 +9,9 @@ for each person containing nested divs:
 
 import logging
 import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -57,24 +59,33 @@ class UVAParser(BasePlacementParser):
                 for div in inner_divs:
                     div_text = div.get_text(strip=True)
                     if div_text.startswith("Initial Placement:"):
-                        raw_placement = div_text.replace("Initial Placement:", "", 1).strip() or None
+                        raw_placement = (
+                            div_text.replace("Initial Placement:", "", 1).strip() or None
+                        )
                     elif div_text.startswith("Thesis:"):
                         continue
-                    elif not raw_name and div_text and not div_text.startswith("Initial") and not div_text.startswith("Thesis"):
+                    elif (
+                        not raw_name
+                        and div_text
+                        and not div_text.startswith("Initial")
+                        and not div_text.startswith("Thesis")
+                    ):
                         # First non-label div is the name
                         raw_name = div_text
 
                 if not raw_name:
                     continue
 
-                rows.append(PlacementRow(
-                    raw_name=raw_name,
-                    raw_field=None,
-                    raw_placement=raw_placement,
-                    raw_position=None,
-                    graduation_year=current_year,
-                    row_index=global_index,
-                ))
+                rows.append(
+                    PlacementRow(
+                        raw_name=raw_name,
+                        raw_field=None,
+                        raw_placement=raw_placement,
+                        raw_position=None,
+                        graduation_year=current_year,
+                        row_index=global_index,
+                    )
+                )
                 global_index += 1
 
         log.info("Parsed %d placement rows from UVA", len(rows))

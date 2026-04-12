@@ -1,5 +1,7 @@
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -20,8 +22,7 @@ class HarvardParser(BasePlacementParser):
                 continue
             year = parse_year(title_span.get_text())
             if year is None:
-                log.warning("Could not parse year from: %s",
-                            title_span.get_text())
+                log.warning("Could not parse year from: %s", title_span.get_text())
                 continue
 
             table = accordion.select_one("table")
@@ -55,14 +56,16 @@ class HarvardParser(BasePlacementParser):
                 if not raw_name:
                     continue
 
-                rows.append(PlacementRow(
-                    raw_name=raw_name,
-                    raw_field=raw_field,
-                    raw_placement=raw_placement,
-                    raw_position=None,
-                    graduation_year=year,
-                    row_index=global_index,
-                ))
+                rows.append(
+                    PlacementRow(
+                        raw_name=raw_name,
+                        raw_field=raw_field,
+                        raw_placement=raw_placement,
+                        raw_position=None,
+                        graduation_year=year,
+                        row_index=global_index,
+                    )
+                )
                 global_index += 1
 
         log.info("Parsed %d placement rows from Harvard", len(rows))

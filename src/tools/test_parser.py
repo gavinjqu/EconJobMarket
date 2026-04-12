@@ -122,10 +122,12 @@ def test_parser(slug: str, url_override: str | None = None):
     print(f"Positions:  {positions_present}/{len(all_rows)} rows have position data")
 
     # Show sample rows
-    print(f"\nSample rows (first 5):")
+    print("\nSample rows (first 5):")
     for r in all_rows[:5]:
-        print(f"  [{r.graduation_year}] {r.raw_name} → {r.raw_placement}"
-              f"{(' (' + r.raw_position + ')') if r.raw_position else ''}")
+        print(
+            f"  [{r.graduation_year}] {r.raw_name} → {r.raw_placement}"
+            f"{(' (' + r.raw_position + ')') if r.raw_position else ''}"
+        )
 
     # Check for common issues
     issues = []
@@ -150,8 +152,10 @@ def test_parser(slug: str, url_override: str | None = None):
 
 if __name__ == "__main__":
     import argparse
-    logging.basicConfig(level=logging.INFO,
-                        format="%(asctime)s %(levelname)-8s %(name)s: %(message)s")
+
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)-8s %(name)s: %(message)s"
+    )
     p = argparse.ArgumentParser()
     p.add_argument("slug")
     p.add_argument("--url", default=None)

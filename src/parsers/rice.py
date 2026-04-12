@@ -8,7 +8,9 @@ The scraper's fetch_url uses a browser UA which usually works.
 """
 
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -41,14 +43,16 @@ class RiceParser(BasePlacementParser):
             if not raw_name:
                 continue
 
-            rows.append(PlacementRow(
-                raw_name=raw_name,
-                raw_field=None,
-                raw_placement=raw_placement,
-                raw_position=None,
-                graduation_year=year,
-                row_index=idx,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=raw_name,
+                    raw_field=None,
+                    raw_placement=raw_placement,
+                    raw_position=None,
+                    graduation_year=year,
+                    row_index=idx,
+                )
+            )
             idx += 1
 
         log.info("Parsed %d placement rows from Rice", len(rows))

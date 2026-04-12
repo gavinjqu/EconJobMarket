@@ -6,7 +6,9 @@ Some older data is inside a details/summary accordion.
 """
 
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -48,14 +50,16 @@ class UIUCParser(BasePlacementParser):
                         continue
 
                     # Entries are institution names only (no student names)
-                    rows.append(PlacementRow(
-                        raw_name=None,
-                        raw_field=None,
-                        raw_placement=text,
-                        raw_position=None,
-                        graduation_year=current_year,
-                        row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name=None,
+                            raw_field=None,
+                            raw_placement=text,
+                            raw_position=None,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
         log.info("Parsed %d placement rows from UIUC (institutions only, no names)", len(rows))

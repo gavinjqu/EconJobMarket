@@ -6,7 +6,9 @@ in format: 'Name, Institution, "Thesis Title," Chair: X, Year'.
 
 import logging
 import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -50,23 +52,29 @@ class IndianaParser(BasePlacementParser):
                         # Try to extract institution before the thesis title
                         quote_match = re.search(r'["\u201c]', remainder)
                         if quote_match:
-                            raw_placement = remainder[:quote_match.start()].strip().strip(",; ") or None
+                            raw_placement = (
+                                remainder[: quote_match.start()].strip().strip(",; ") or None
+                            )
                         else:
                             # No thesis - take up to "Chair:" if present
-                            chair_match = re.search(r',?\s*Chair:', remainder, re.IGNORECASE)
+                            chair_match = re.search(r",?\s*Chair:", remainder, re.IGNORECASE)
                             if chair_match:
-                                raw_placement = remainder[:chair_match.start()].strip().strip(",; ") or None
+                                raw_placement = (
+                                    remainder[: chair_match.start()].strip().strip(",; ") or None
+                                )
                             else:
                                 raw_placement = remainder.strip().strip(",; ") or None
 
-                    rows.append(PlacementRow(
-                        raw_name=raw_name,
-                        raw_field=None,
-                        raw_placement=raw_placement,
-                        raw_position=None,
-                        graduation_year=current_year,
-                        row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name=raw_name,
+                            raw_field=None,
+                            raw_placement=raw_placement,
+                            raw_position=None,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
         log.info("Parsed %d placement rows from Indiana", len(rows))
