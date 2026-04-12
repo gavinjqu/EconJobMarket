@@ -1,51 +1,76 @@
 slug,name,domain,state,placement_url,in_external_dataset
 harvard,Harvard University,economics.harvard.edu,MA,https://economics.harvard.edu/placement,yes
-stanford,Stanford University,economics.stanford.edu,CA,https://economics.stanford.edu/graduate/student-placement,yes
 mit,Massachusetts Institute of Technology,economics.mit.edu,MA,https://economics.mit.edu/academic-programs/phd-program/job-market,no
-princeton,Princeton University,economics.princeton.edu,NJ,https://economics.princeton.edu/graduate-program/job-market-and-placements/statistics-on-past-placements/,yes
-yale,Yale University,economics.yale.edu,CT,https://economics.yale.edu/phd-program/placement/outcomes,yes
+stanford,Stanford University,economics.stanford.edu,CA,https://economics.stanford.edu/graduate/student-placement,yes
 berkeley,University of California Berkeley,econ.berkeley.edu,CA,https://econ.berkeley.edu/graduate/program/recent-outcomes,yes
 chicago,University of Chicago,economics.uchicago.edu,IL,https://economics.uchicago.edu/phd-program/career-placement,yes
-columbia,Columbia University,econ.columbia.edu,NY,https://econ.columbia.edu/phd/placement/,yes
+princeton,Princeton University,economics.princeton.edu,NJ,https://economics.princeton.edu/graduate-program/job-market-and-placements/statistics-on-past-placements/,yes
+yale,Yale University,economics.yale.edu,CT,https://economics.yale.edu/phd-program/placement/outcomes,yes
 northwestern,Northwestern University,economics.northwestern.edu,IL,https://economics.northwestern.edu/graduate/prospective/placement.html,yes
-nyu,New York University,econ.nyu.edu,NY,https://as.nyu.edu/departments/econ/job-market/placements.html,yes
+columbia,Columbia University,econ.columbia.edu,NY,https://econ.columbia.edu/phd/placement/,yes
 upenn,University of Pennsylvania,economics.sas.upenn.edu,PA,https://economics.sas.upenn.edu/graduate/prospective-students/placement-information,yes
-michigan,University of Michigan,lsa.umich.edu/econ,MI,https://lsa.umich.edu/econ/doctoral-program/past-job-market-placements.html,yes
 ucla,University of California Los Angeles,economics.ucla.edu,CA,https://economics.ucla.edu/graduate/graduate-profiles/graduate-placement-history/,no
-minnesota,University of Minnesota,economics.umn.edu,MN,https://cla.umn.edu/economics/graduate/job-placement-achievements,yes
-duke,Duke University,econ.duke.edu,NC,https://econ.duke.edu/phd-program/prospective-students/placements,yes
-cornell,Cornell University,economics.cornell.edu,NY,https://economics.cornell.edu/historical-placement-phd-students,yes
+nyu,New York University,econ.nyu.edu,NY,https://as.nyu.edu/departments/econ/job-market/placements.html,yes
+michigan,University of Michigan,lsa.umich.edu/econ,MI,https://lsa.umich.edu/econ/doctoral-program/past-job-market-placements.html,yes
 ucsd,University of California San Diego,economics.ucsd.edu,CA,https://economics.ucsd.edu/graduate-program/jobmarket-tab/placement-history.html,yes
-wisconsin,University of Wisconsin-Madison,econ.wisc.edu,WI,https://econ.wisc.edu/doctoral/career-placement/,yes
 brown,Brown University,economics.brown.edu,RI,https://economics.brown.edu/academics/graduate/job-placement-results,yes
-maryland,University of Maryland,econ.umd.edu,MD,https://www.econ.umd.edu/graduate/job-placement,yes
-bostonu,Boston University,bu.edu/econ,MA,https://www.bu.edu/econ/academics/phd/recent-phd-placements/,yes
+caltech,California Institute of Technology,hss.caltech.edu,CA,https://www.hss.caltech.edu/graduate-studies/alumni,no
+cornell,Cornell University,economics.cornell.edu,NY,https://economics.cornell.edu/historical-placement-phd-students,yes
+wisconsin,University of Wisconsin-Madison,econ.wisc.edu,WI,https://econ.wisc.edu/doctoral/career-placement/,yes
+duke,Duke University,econ.duke.edu,NC,https://econ.duke.edu/phd-program/prospective-students/placements,yes
+minnesota,University of Minnesota,economics.umn.edu,MN,https://cla.umn.edu/economics/graduate/job-placement-achievements,yes
 jhu,Johns Hopkins University,econ.jhu.edu,MD,https://econ.jhu.edu/graduate/recent-placements/,yes
-wustl,Washington University in St. Louis,economics.wustl.edu,MO,https://economics.wustl.edu/job-market-and-placement,yes
-uva,University of Virginia,economics.virginia.edu,VA,https://economics.virginia.edu/placement-history,yes
 utaustin,University of Texas at Austin,liberalarts.utexas.edu/economics,TX,https://liberalarts.utexas.edu/economics/ph-d-program/ph-d-career-outcomes/,yes
-bc,Boston College,bc.edu/economics,MA,https://www.bc.edu/bc-web/schools/mcas/departments/economics/graduate/placements.html,yes
-usc,University of Southern California,dornsife.usc.edu/economics,CA,https://dornsife.usc.edu/econ/doctoral/placements/,yes
-vanderbilt,Vanderbilt University,as.vanderbilt.edu/econ,TN,https://as.vanderbilt.edu/economics/phd-placements/,yes
-rochester,University of Rochester,sas.rochester.edu/eco,NY,https://www.sas.rochester.edu/eco/graduate/placement.html,yes
-notre_dame,University of Notre Dame,economics.nd.edu,IN,https://economics.nd.edu/graduate/placements/,yes
-carnegie_mellon,Carnegie Mellon University,cmu.edu/tepper,PA,https://www.cmu.edu/tepper/programs/phd/job-market,no
+bostonu,Boston University,bu.edu/econ,MA,https://www.bu.edu/econ/academics/phd/recent-phd-placements/,yes
+uc_davis,University of California Davis,economics.ucdavis.edu,CA,https://economics.ucdavis.edu/graduate-student-placements,no
+maryland,University of Maryland,econ.umd.edu,MD,https://www.econ.umd.edu/graduate/job-placement,yes
 penn_state,Pennsylvania State University,econ.psu.edu,PA,https://econ.la.psu.edu/ph-d-program/initial-placements-of-ph-d-graduates/,no
-ohio_state,Ohio State University,economics.osu.edu,OH,https://economics.osu.edu/phd-placement-history,no
+rochester,University of Rochester,sas.rochester.edu/eco,NY,https://www.sas.rochester.edu/eco/graduate/placement.html,yes
+bc,Boston College,bc.edu/economics,MA,https://www.bc.edu/bc-web/schools/mcas/departments/economics/graduate/placements.html,yes
+uva,University of Virginia,economics.virginia.edu,VA,https://economics.virginia.edu/placement-history,yes
+wustl,Washington University in St. Louis,economics.wustl.edu,MO,https://economics.wustl.edu/job-market-and-placement,yes
 michigan_state,Michigan State University,econ.msu.edu,MI,https://econ.msu.edu/academics/graduate/past-jobs,no
 uiuc,University of Illinois Urbana-Champaign,economics.illinois.edu,IL,https://economics.illinois.edu/academics/phd-program/phd-placements-year-employer,no
-georgetown,Georgetown University,economics.georgetown.edu,DC,https://econ.georgetown.edu/academics/phd/alumni/recent-placements/,no
-pittsburgh,University of Pittsburgh,economics.pitt.edu,PA,https://www.econ.pitt.edu/doctoral/career-outcomes-history,no
-uc_davis,University of California Davis,economics.ucdavis.edu,CA,https://economics.ucdavis.edu/graduate-student-placements,no
-emory,Emory University,economics.emory.edu,GA,https://economics.emory.edu/doctoral/alumni-grad-job-placement.html,no
-iowa,University of Iowa,economics.uiowa.edu,IA,https://tippie.uiowa.edu/phd/phd-economics,no
-uc_irvine,University of California Irvine,economics.uci.edu,CA,https://www.economics.uci.edu/grad/placement.php,no
-arizona_state,Arizona State University,economics.asu.edu,AZ,https://wpcarey.asu.edu/economics-degrees/placement,no
-rice,Rice University,economics.rice.edu,TX,https://economics.rice.edu/graduate-program/phd/recent-placements,no
 unc,University of North Carolina Chapel Hill,economics.unc.edu,NC,https://econ.unc.edu/recent-placements/,no
-indiana,Indiana University,economics.indiana.edu,IN,https://economics.indiana.edu/graduate/job-placement-by-year.html,no
-rutgers,Rutgers University,economics.rutgers.edu,NJ,https://economics.rutgers.edu/academics/graduate/graduate-placements,no
+usc,University of Southern California,dornsife.usc.edu/economics,CA,https://dornsife.usc.edu/econ/doctoral/placements/,yes
+vanderbilt,Vanderbilt University,as.vanderbilt.edu/econ,TN,https://as.vanderbilt.edu/economics/phd-placements/,yes
+arizona_state,Arizona State University,economics.asu.edu,AZ,https://wpcarey.asu.edu/economics-degrees/placement,no
+georgetown,Georgetown University,economics.georgetown.edu,DC,https://econ.georgetown.edu/academics/phd/alumni/recent-placements/,no
+ohio_state,Ohio State University,economics.osu.edu,OH,https://economics.osu.edu/phd-placement-history,no
+uc_santa_barbara,University of California Santa Barbara,econ.ucsb.edu,CA,https://econ.ucsb.edu/programs/graduate/placement,no
+arizona,University of Arizona,eller.arizona.edu,AZ,https://eller.arizona.edu/programs/doctoral/economics/placement,no
+uc_irvine,University of California Irvine,economics.uci.edu,CA,https://www.economics.uci.edu/grad/placement.php,no
+pittsburgh,University of Pittsburgh,economics.pitt.edu,PA,https://www.econ.pitt.edu/doctoral/career-outcomes-history,no
+washington,University of Washington,econ.washington.edu,WA,https://econ.washington.edu/job-placement,no
+rice,Rice University,economics.rice.edu,TX,https://economics.rice.edu/graduate-program/phd/recent-placements,no
+texas_am,Texas A&M University,artsci.tamu.edu,TX,https://artsci.tamu.edu/economics/academics/graduate/phd-program/job-market-candidate-placement.html,no
+colorado,University of Colorado Boulder,colorado.edu/economics,CO,https://www.colorado.edu/economics/graduate/placement,no
+notre_dame,University of Notre Dame,economics.nd.edu,IN,https://economics.nd.edu/graduate/placements/,yes
 purdue,Purdue University,krannert.purdue.edu/economics,IN,https://www.business.purdue.edu/phd/programs/economics/program.php,no
-florida,University of Florida,economics.clas.ufl.edu,FL,https://economics.clas.ufl.edu/people/alumni/,no
-caltech,California Institute of Technology,hss.caltech.edu,CA,https://www.hss.caltech.edu/graduate-studies/alumni,no
+rutgers,Rutgers University,economics.rutgers.edu,NJ,https://economics.rutgers.edu/academics/graduate/graduate-placements,no
+emory,Emory University,economics.emory.edu,GA,https://economics.emory.edu/doctoral/alumni-grad-job-placement.html,no
+stony_brook,Stony Brook University,stonybrook.edu/commcms/economics,NY,https://www.stonybrook.edu/commcms/economics/graduate/graduate-student-placement.php,no
+syracuse,Syracuse University,maxwell.syr.edu,NY,https://www.maxwell.syr.edu/academics/economics-department/graduate-studies/ph-d-in-economics,no
+uc_santa_cruz,University of California Santa Cruz,economics.ucsc.edu,CA,https://economics.ucsc.edu/academics/graduate-program/PhD/placement.html,no
+uc_riverside,University of California Riverside,economics.ucr.edu,CA,https://economics.ucr.edu/graduate-program/placement/,no
+georgia,University of Georgia,terry.uga.edu,GA,https://www.terry.uga.edu/phd/economics/placements/,no
+iowa,University of Iowa,economics.uiowa.edu,IA,https://tippie.uiowa.edu/phd/phd-economics,no
 oregon,University of Oregon,economics.uoregon.edu,OR,https://socialsciences.uoregon.edu/economics/job-market,no
+smu,Southern Methodist University,smu.edu/dedman/academics/departments/economics,TX,https://www.smu.edu/dedman/academics/departments/economics/graduate/phd/placementbios/placement,no
+cuny,CUNY Graduate Center,gc.cuny.edu/economics,NY,https://www.gc.cuny.edu/economics/alumni-highlights,no
+gwu,George Washington University,economics.columbian.gwu.edu,DC,https://economics.columbian.gwu.edu/phd-graduate-job-placements,no
+georgia_tech,Georgia Institute of Technology,econ.gatech.edu,GA,https://econ.gatech.edu/phd-economics/placements,no
+georgia_state,Georgia State University,aysps.gsu.edu/economics,GA,https://aysps.gsu.edu/economics/ph-d-placements/,no
+iowa_state,Iowa State University,econ.iastate.edu,IA,https://www.econ.iastate.edu/phd-job-placements,no
+nc_state,North Carolina State University,poole.ncsu.edu/economics,NC,https://poole.ncsu.edu/gradecon/career-resources/recent-placements/,no
+florida,University of Florida,economics.clas.ufl.edu,FL,https://economics.clas.ufl.edu/people/alumni/,no
+brandeis,Brandeis University,brandeis.edu/economics,MA,https://www.brandeis.edu/economics/alumni/economist-alumni.html,no
+claremont,Claremont Graduate University,cgu.edu,CA,https://www.cgu.edu/academics/program/phd-economics/,no
+tufts,Tufts University,as.tufts.edu/economics,MA,https://as.tufts.edu/economics/people/nfepp-program-job-market-candidates,no
+virginia_tech,Virginia Tech,econ.vt.edu,VA,https://econ.vt.edu/graduate/jobmarket.html,no
+florida_state,Florida State University,cosspp.fsu.edu/economics,FL,https://cosspp.fsu.edu/economics/phd-program/ph-d-program-overview/phd-recent-placements/,no
+uconn,University of Connecticut,econ.uconn.edu,CT,https://econ.uconn.edu/placements/,no
+uic,University of Illinois Chicago,econ.uic.edu,IL,https://econ.uic.edu/graduate/phd-economics/placement/,no
+umass,University of Massachusetts Amherst,umass.edu/economics,MA,https://www.umass.edu/economics/academics/graduate/placements,no
+carnegie_mellon,Carnegie Mellon University,cmu.edu/tepper,PA,https://www.cmu.edu/tepper/programs/phd/job-market,no
+indiana,Indiana University,economics.indiana.edu,IN,https://economics.indiana.edu/graduate/job-placement-by-year.html,no

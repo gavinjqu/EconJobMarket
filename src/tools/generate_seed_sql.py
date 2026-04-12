@@ -1,4 +1,4 @@
-"""Generate seed SQL for all 50 target universities from config/universities.csv.
+"""Generate seed SQL for all target universities from config/universities.csv.
 
 Usage:
     python -m src.tools.generate_seed_sql
@@ -27,7 +27,7 @@ def generate():
         "-- Auto-generated from config/universities.csv",
         "-- Do not edit manually; re-run: python -m src.tools.generate_seed_sql",
         "",
-        "-- Seed: source_university (top 50 US econ departments)",
+        "-- Seed: source_university (top US econ departments)",
         "INSERT INTO source_university (name, domain, country, state)",
         "VALUES",
     ]

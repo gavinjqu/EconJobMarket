@@ -1,4 +1,4 @@
-"""Report coverage gaps across the 50 target schools.
+"""Report coverage gaps across target schools.
 
 Shows which schools have data, row counts, year ranges, and which
 still need scrapers or import.

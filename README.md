@@ -2,7 +2,7 @@
 
 Scrapes economics PhD placement pages from top US universities and loads the data into a 3-layer SQLite pipeline (raw → staging → core). Built for analyzing hiring trends, sector breakdowns, and placement outcomes across programs and years.
 
-**Current coverage:** 50 universities, 44 with placement data — **13,055 placement records** spanning 1987–2025.
+**Current coverage:** 75 universities (top US economics PhD programs per [US News 2025 rankings](https://www.usnews.com/best-graduate-schools/top-humanities-schools/economics-rankings)).
 
 **Tech stack:** Python 3, SQLite, BeautifulSoup, requests, uv
 
@@ -43,7 +43,7 @@ uv run python -m src init-db
 
 ```bash
 uv run python -m src scrape harvard          # Scrape Harvard only
-uv run python -m src scrape all              # Scrape all 50 universities
+uv run python -m src scrape all              # Scrape all 75 universities
 uv run python -m src scrape harvard --dry-run  # Fetch & parse without writing to DB
 ```
 
@@ -389,7 +389,7 @@ uv run python -m src scrape <slug>            # Full scrape with DB insert
 ├── pyproject.toml                  # Python project config & dependencies (uv)
 ├── uv.lock                         # Locked dependency versions
 ├── config/
-│   └── universities.csv            # Top 50 US econ departments (single source of truth)
+│   └── universities.csv            # Top 75 US econ departments (single source of truth)
 ├── data/
 │   ├── placements.db               # SQLite database (the dataset)
 │   └── imports/                    # Cached external datasets
@@ -402,7 +402,7 @@ uv run python -m src scrape <slug>            # Full scrape with DB insert
     ├── parsers/
     │   ├── __init__.py             # Auto-discovery parser registry (pkgutil-based)
     │   ├── base.py                 # BasePlacementParser + PlacementRow dataclass
-    │   ├── harvard.py              # 50 university-specific parsers...
+    │   ├── harvard.py              # University-specific parsers...
     │   ├── stanford.py
     │   └── ...
     ├── importers/
