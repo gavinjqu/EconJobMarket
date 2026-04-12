@@ -1,5 +1,4 @@
 import logging
-import re
 
 from bs4 import BeautifulSoup
 
@@ -18,51 +17,36 @@ class UCRiversideParser(BasePlacementParser):
         global_index = 0
         current_year = None
 
-        # Years are h3 headings, records are paragraphs with name + placement
-        content = soup.find("div", class_="entry-content") or soup
-        for el in content.find_all(["h3", "p"]):
-            if el.name == "h3":
-                year = parse_year(el.get_text(strip=True))
-                if year:
-                    current_year = year
-                continue
+        # Structure: single table with <th colspan="2">YEAR</th> rows
+        # as year markers, followed by <td> rows for name + placement.
+        for table in soup.find_all("table"):
+            for tr in table.find_all("tr"):
+                # Check for year header row
+                th = tr.find("th")
+                if th:
+                    year = parse_year(th.get_text(strip=True))
+                    if year:
+                        current_year = year
+                    continue
 
-            if el.name == "p" and current_year is not None:
-                text = el.get_text(strip=True)
-                if not text or len(text) < 3:
-                    continue
-                # Skip year-only paragraphs
-                if re.match(r"^\d{4}$", text):
-                    continue
-                # Try to extract name from the text
-                # Format: "Name\nPosition, Institution" or just "Name"
-                lines = el.get_text(separator="\n", strip=True).split("\n")
-                lines = [ln.strip() for ln in lines if ln.strip()]
-                if not lines:
-                    continue
-                raw_name = lines[0]
-                raw_placement = None
-                raw_position = None
-                if len(lines) > 1:
-                    placement_text = lines[1]
-                    parts = placement_text.split(",", 1)
-                    if len(parts) == 2:
-                        raw_position = parts[0].strip()
-                        raw_placement = parts[1].strip()
-                    else:
-                        raw_placement = placement_text
+                tds = tr.find_all("td")
+                if len(tds) >= 2 and current_year is not None:
+                    raw_name = tds[0].get_text(strip=True)
+                    raw_placement = tds[1].get_text(strip=True)
+                    if not raw_name or raw_name.lower() in ("name", "student"):
+                        continue
 
-                rows.append(
-                    PlacementRow(
-                        raw_name=raw_name,
-                        raw_field=None,
-                        raw_placement=raw_placement,
-                        raw_position=raw_position,
-                        graduation_year=current_year,
-                        row_index=global_index,
+                    rows.append(
+                        PlacementRow(
+                            raw_name=raw_name,
+                            raw_field=None,
+                            raw_placement=raw_placement,
+                            raw_position=None,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
                     )
-                )
-                global_index += 1
+                    global_index += 1
 
         log.info("Parsed %d placement rows from UC Riverside", len(rows))
         return rows
