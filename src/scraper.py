@@ -74,6 +74,13 @@ def run_scraper(target: str, dry_run: bool = False):
         finally:
             close_pool()
 
+    if not dry_run:
+        from src.export_sqlite import export_to_sqlite
+        try:
+            export_to_sqlite()
+        except Exception:
+            log.exception("SQLite export failed")
+
 
 def _get_config_row(slug: str) -> dict | None:
     """Return the full config row for a slug from universities.csv."""

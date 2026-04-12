@@ -55,6 +55,13 @@ def main():
         help="Show what would be imported without DB writes",
     )
 
+    # --- export ---
+    sp_export = sub.add_parser("export", help="Export placement data to SQLite")
+    sp_export.add_argument(
+        "--output", default=None,
+        help="Output path (default: data/placements.db)",
+    )
+
     # --- generate ---
     sp_gen = sub.add_parser("generate", help="Generate a parser via LLM")
     sp_gen.add_argument(
@@ -88,6 +95,10 @@ def main():
         elif args.source == "gap-report":
             from src.importers.gap_report import run_gap_report
             run_gap_report()
+
+    elif args.command == "export":
+        from src.export_sqlite import export_to_sqlite
+        export_to_sqlite(db_path=args.output)
 
     elif args.command == "generate":
         if args.batch:

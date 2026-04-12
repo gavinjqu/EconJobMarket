@@ -4,23 +4,44 @@ Scrapes economics PhD placement pages from top US universities and loads the dat
 
 **Current coverage:** 50 universities, 44 with placement data — **13,055 placement records** spanning 1987–2025.
 
-**Tech stack:** Python 3, PostgreSQL 16, BeautifulSoup, requests
+**Tech stack:** Python 3, PostgreSQL 16, BeautifulSoup, requests, uv
 
-## Quickstart
+> **TODO:** Migrate the pipeline to write directly to SQLite, removing the PostgreSQL/Docker dependency entirely. The dataset (~13K rows) doesn't need a server database.
+
+## Quick Start — Just Query the Data
+
+The easiest way to use this dataset is the **SQLite file** — no Postgres, Docker, or Python setup required:
+
+```bash
+sqlite3 data/placements.db
+```
+
+```sql
+-- Browse recent placements
+SELECT candidate_name, university_name, graduation_year,
+       placement_institution, placement_sector
+FROM placement
+ORDER BY graduation_year DESC
+LIMIT 20;
+```
+
+The SQLite file is a portable snapshot of the cleaned placement data, regenerated every time the pipeline runs.
+
+## Developer Setup
 
 ### Prerequisites
 
-- Docker
-- Python 3.10+
+- [uv](https://docs.astral.sh/uv/) (Python package manager)
+- Docker (for PostgreSQL)
 
 ### Setup
 
 ```bash
+# Install Python dependencies
+uv sync
+
 # Start PostgreSQL
 docker compose up -d
-
-# Install Python dependencies
-pip install -r requirements.txt
 
 # Initialize the database schema and seed data
 docker exec -i econjobmarket-db-1 psql -U amm -d amm < sql/ddl/001_schema.sql
@@ -34,16 +55,25 @@ docker exec -i econjobmarket-db-1 psql -U amm -d amm < sql/ddl/055_seed_top50.sq
 ### Run the scraper
 
 ```bash
-python -m src scrape harvard          # Scrape Harvard only
-python -m src scrape all              # Scrape all 50 universities
-python -m src scrape harvard --dry-run  # Fetch & parse without writing to DB
+uv run python -m src scrape harvard          # Scrape Harvard only
+uv run python -m src scrape all              # Scrape all 50 universities
+uv run python -m src scrape harvard --dry-run  # Fetch & parse without writing to DB
+```
+
+Each scrape automatically regenerates `data/placements.db` with the latest data.
+
+### Export SQLite manually
+
+```bash
+uv run python -m src export                          # Default: data/placements.db
+uv run python -m src export --output path/to/out.db  # Custom path
 ```
 
 ### Import external data
 
 ```bash
-python -m src import econphdplacements          # Import from econphdplacements.com
-python -m src import econphdplacements --dry-run # Preview without writing
+uv run python -m src import econphdplacements          # Import from econphdplacements.com
+uv run python -m src import econphdplacements --dry-run # Preview without writing
 ```
 
 ## Database Schema
@@ -250,18 +280,26 @@ source_university ─────┐
 
 ## Querying the Data
 
-Connect to the database:
+### SQLite (recommended)
+
+```bash
+sqlite3 data/placements.db
+```
+
+### PostgreSQL
 
 ```bash
 docker exec -it econjobmarket-db-1 psql -U amm -d amm
 ```
+
+> Note: SQLite queries below omit the `amm.` schema prefix. For PostgreSQL, prefix table names with `amm.` (e.g., `amm.placement`).
 
 ### Browse placements (paginated)
 
 ```sql
 SELECT candidate_name, university_name, graduation_year,
        placement_institution, placement_position, placement_sector
-FROM amm.placement
+FROM placement
 ORDER BY graduation_year DESC, candidate_name
 LIMIT 20 OFFSET 0;
 ```
@@ -270,7 +308,7 @@ LIMIT 20 OFFSET 0;
 
 ```sql
 SELECT university_name, graduation_year, COUNT(*) AS placements
-FROM amm.placement
+FROM placement
 GROUP BY university_name, graduation_year
 ORDER BY university_name, graduation_year DESC;
 ```
@@ -280,7 +318,7 @@ ORDER BY university_name, graduation_year DESC;
 ```sql
 SELECT placement_sector, COUNT(*) AS n,
        ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) AS pct
-FROM amm.placement
+FROM placement
 GROUP BY placement_sector
 ORDER BY n DESC;
 ```
@@ -290,8 +328,8 @@ ORDER BY n DESC;
 ```sql
 SELECT candidate_name, university_name, graduation_year,
        placement_institution, placement_position
-FROM amm.placement
-WHERE candidate_name ILIKE '%smith%';
+FROM placement
+WHERE candidate_name LIKE '%smith%';
 ```
 
 ### Find all postdoc placements
@@ -299,8 +337,8 @@ WHERE candidate_name ILIKE '%smith%';
 ```sql
 SELECT candidate_name, university_name, graduation_year,
        placement_institution, placement_position
-FROM amm.placement
-WHERE is_postdoc = TRUE
+FROM placement
+WHERE is_postdoc = 1
 ORDER BY graduation_year DESC;
 ```
 
@@ -308,7 +346,7 @@ ORDER BY graduation_year DESC;
 
 ```sql
 SELECT placement_institution, COUNT(*) AS hires
-FROM amm.placement
+FROM placement
 WHERE placement_institution IS NOT NULL
 GROUP BY placement_institution
 ORDER BY hires DESC
@@ -319,11 +357,11 @@ LIMIT 15;
 
 ```sql
 SELECT graduation_year,
-       COUNT(*) FILTER (WHERE placement_sector = 'academic')  AS academic,
-       COUNT(*) FILTER (WHERE placement_sector = 'private')   AS private,
-       COUNT(*) FILTER (WHERE placement_sector = 'government') AS government,
+       SUM(CASE WHEN placement_sector = 'academic' THEN 1 ELSE 0 END) AS academic,
+       SUM(CASE WHEN placement_sector = 'private' THEN 1 ELSE 0 END) AS private,
+       SUM(CASE WHEN placement_sector = 'government' THEN 1 ELSE 0 END) AS government,
        COUNT(*) AS total
-FROM amm.placement
+FROM placement
 WHERE graduation_year IS NOT NULL
 GROUP BY graduation_year
 ORDER BY graduation_year DESC;
@@ -380,8 +418,8 @@ class MyParser(BasePlacementParser):
 ### 4. Test and run
 
 ```bash
-python -m src scrape <slug> --dry-run  # Test parsing without DB writes
-python -m src scrape <slug>            # Full scrape with DB insert
+uv run python -m src scrape <slug> --dry-run  # Test parsing without DB writes
+uv run python -m src scrape <slug>            # Full scrape with DB insert
 ```
 
 ## Project Structure
@@ -389,7 +427,8 @@ python -m src scrape <slug>            # Full scrape with DB insert
 ```
 .
 ├── docker-compose.yml              # PostgreSQL 16 service
-├── requirements.txt                # Python dependencies
+├── pyproject.toml                  # Python project config & dependencies (uv)
+├── uv.lock                         # Locked dependency versions
 ├── .env                            # Database credentials (not committed)
 ├── config/
 │   └── universities.csv            # Top 50 US econ departments (single source of truth)
@@ -402,12 +441,14 @@ python -m src scrape <slug>            # Full scrape with DB insert
 │       ├── 040_indexes.sql         # All indexes
 │       └── 055_seed_top50.sql      # Generated seed data for all 50 universities
 ├── data/
+│   ├── placements.db               # SQLite snapshot (auto-generated)
 │   └── imports/                    # Cached external datasets
 └── src/
     ├── __init__.py
-    ├── __main__.py                 # CLI entry point (scrape, import, generate subcommands)
+    ├── __main__.py                 # CLI entry point (scrape, import, export, generate)
     ├── scraper.py                  # 4-phase pipeline orchestrator
     ├── database.py                 # Connection pool, insert/query helpers
+    ├── export_sqlite.py            # PostgreSQL → SQLite snapshot export
     ├── utils.py                    # HTTP fetch, text cleaning, sector classification
     ├── parsers/
     │   ├── __init__.py             # Auto-discovery parser registry (pkgutil-based)

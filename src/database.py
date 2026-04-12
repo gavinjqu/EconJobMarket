@@ -22,7 +22,7 @@ def get_pool():
             port=int(os.getenv("DB_PORT", 5432)),
             dbname=os.getenv("DB_NAME", "amm"),
             user=os.getenv("DB_USER", "amm"),
-            password=os.getenv("DB_PASSWORD", "admin123"),
+            password=os.getenv("DB_PASSWORD", ""),
         )
     return _pool
 
