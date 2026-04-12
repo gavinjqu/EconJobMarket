@@ -15,6 +15,3 @@ build/
 
 # Environment
 .env
-
-# Data artifacts
-data/placements.db

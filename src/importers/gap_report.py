@@ -31,18 +31,17 @@ def run_gap_report():
     # Query current placement counts from the database
     try:
         with get_conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT u.name,
-                           COUNT(p.placement_id) AS cnt,
-                           MIN(p.graduation_year) AS min_year,
-                           MAX(p.graduation_year) AS max_year
-                    FROM amm.source_university u
-                    LEFT JOIN amm.placement p ON p.university_id = u.university_id
-                    GROUP BY u.university_id, u.name
-                    ORDER BY cnt DESC
-                """)
-                db_stats = {row[0]: (row[1], row[2], row[3]) for row in cur.fetchall()}
+            rows = conn.execute("""
+                SELECT u.name,
+                       COUNT(p.placement_id) AS cnt,
+                       MIN(p.graduation_year) AS min_year,
+                       MAX(p.graduation_year) AS max_year
+                FROM source_university u
+                LEFT JOIN placement p ON p.university_id = u.university_id
+                GROUP BY u.university_id, u.name
+                ORDER BY cnt DESC
+            """).fetchall()
+            db_stats = {row[0]: (row[1], row[2], row[3]) for row in rows}
     except Exception as e:
         log.warning("Could not query database: %s. Showing config-only report.", e)
         db_stats = {}

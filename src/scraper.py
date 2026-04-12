@@ -16,7 +16,7 @@ import subprocess
 from contextlib import contextmanager
 
 from src.database import (
-    get_conn, close_pool,
+    get_conn, close_pool, init_db,
     insert_ingest_run, finish_ingest_run,
     insert_raw_fetch, insert_stg_placement, insert_placement,
     get_pages_for_university, get_unprocessed_staging,
@@ -60,6 +60,9 @@ def _git_sha():
 
 
 def run_scraper(target: str, dry_run: bool = False):
+    if not dry_run:
+        init_db()
+
     if target == "all":
         slugs = list(PARSERS.keys())
     else:
@@ -71,15 +74,6 @@ def run_scraper(target: str, dry_run: bool = False):
             _scrape_university(slug, dry_run)
         except Exception:
             log.exception("Failed to scrape %s", slug)
-        finally:
-            close_pool()
-
-    if not dry_run:
-        from src.export_sqlite import export_to_sqlite
-        try:
-            export_to_sqlite()
-        except Exception:
-            log.exception("SQLite export failed")
 
 
 def _get_config_row(slug: str) -> dict | None:

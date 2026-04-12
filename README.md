@@ -1,16 +1,14 @@
 # EconJobMarket
 
-Scrapes economics PhD placement pages from top US universities and loads the data into a 3-layer PostgreSQL pipeline (raw → staging → core). Built for analyzing hiring trends, sector breakdowns, and placement outcomes across programs and years.
+Scrapes economics PhD placement pages from top US universities and loads the data into a 3-layer SQLite pipeline (raw → staging → core). Built for analyzing hiring trends, sector breakdowns, and placement outcomes across programs and years.
 
 **Current coverage:** 50 universities, 44 with placement data — **13,055 placement records** spanning 1987–2025.
 
-**Tech stack:** Python 3, PostgreSQL 16, BeautifulSoup, requests, uv
-
-> **TODO:** Migrate the pipeline to write directly to SQLite, removing the PostgreSQL/Docker dependency entirely. The dataset (~13K rows) doesn't need a server database.
+**Tech stack:** Python 3, SQLite, BeautifulSoup, requests, uv
 
 ## Quick Start — Just Query the Data
 
-The easiest way to use this dataset is the **SQLite file** — no Postgres, Docker, or Python setup required:
+No setup required — just open the SQLite database:
 
 ```bash
 sqlite3 data/placements.db
@@ -25,14 +23,11 @@ ORDER BY graduation_year DESC
 LIMIT 20;
 ```
 
-The SQLite file is a portable snapshot of the cleaned placement data, regenerated every time the pipeline runs.
-
 ## Developer Setup
 
 ### Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) (Python package manager)
-- Docker (for PostgreSQL)
 
 ### Setup
 
@@ -40,16 +35,8 @@ The SQLite file is a portable snapshot of the cleaned placement data, regenerate
 # Install Python dependencies
 uv sync
 
-# Start PostgreSQL
-docker compose up -d
-
-# Initialize the database schema and seed data
-docker exec -i econjobmarket-db-1 psql -U amm -d amm < sql/ddl/001_schema.sql
-docker exec -i econjobmarket-db-1 psql -U amm -d amm < sql/ddl/010_tables_raw.sql
-docker exec -i econjobmarket-db-1 psql -U amm -d amm < sql/ddl/020_tables_staging.sql
-docker exec -i econjobmarket-db-1 psql -U amm -d amm < sql/ddl/030_tables_core.sql
-docker exec -i econjobmarket-db-1 psql -U amm -d amm < sql/ddl/040_indexes.sql
-docker exec -i econjobmarket-db-1 psql -U amm -d amm < sql/ddl/055_seed_top50.sql
+# Initialize the database (creates data/placements.db with schema + seed data)
+uv run python -m src init-db
 ```
 
 ### Run the scraper
@@ -58,15 +45,6 @@ docker exec -i econjobmarket-db-1 psql -U amm -d amm < sql/ddl/055_seed_top50.sq
 uv run python -m src scrape harvard          # Scrape Harvard only
 uv run python -m src scrape all              # Scrape all 50 universities
 uv run python -m src scrape harvard --dry-run  # Fetch & parse without writing to DB
-```
-
-Each scrape automatically regenerates `data/placements.db` with the latest data.
-
-### Export SQLite manually
-
-```bash
-uv run python -m src export                          # Default: data/placements.db
-uv run python -m src export --output path/to/out.db  # Custom path
 ```
 
 ### Import external data
@@ -78,7 +56,7 @@ uv run python -m src import econphdplacements --dry-run # Preview without writin
 
 ## Database Schema
 
-All tables live in the `amm` schema. Data flows through three layers:
+All tables live in `data/placements.db`. Data flows through three layers:
 
 ```
 Fetch HTML ──► raw_fetch ──► Parse ──► stg_placement ──► Clean ──► placement
@@ -90,18 +68,18 @@ Fetch HTML ──► raw_fetch ──► Parse ──► stg_placement ──►
 
 ### Raw Layer
 
-#### `amm.source_university`
+#### `source_university`
 
 Master list of universities.
 
 | Column | Type | Nullable | Description |
 |--------|------|----------|-------------|
-| `university_id` | `bigserial` | NO | Primary key |
+| `university_id` | `integer` | NO | Primary key |
 | `name` | `text` | NO | Full university name |
 | `domain` | `text` | YES | Department website domain |
 | `country` | `text` | YES | Country code |
 | `state` | `text` | YES | US state abbreviation |
-| `created_at` | `timestamptz` | NO | Row creation timestamp |
+| `created_at` | `text` | NO | Row creation timestamp |
 
 Example:
 
@@ -110,19 +88,19 @@ Example:
 | 1 | Harvard University | economics.harvard.edu | US | MA |
 | 2 | Stanford University | economics.stanford.edu | US | CA |
 
-#### `amm.source_page`
+#### `source_page`
 
 URLs to scrape per university.
 
 | Column | Type | Nullable | Description |
 |--------|------|----------|-------------|
-| `page_id` | `bigserial` | NO | Primary key |
-| `university_id` | `bigint` | NO | FK → source_university |
+| `page_id` | `integer` | NO | Primary key |
+| `university_id` | `integer` | NO | FK → source_university |
 | `page_type` | `text` | NO | Page category (e.g., `placement`) |
 | `url` | `text` | NO | Full URL to scrape |
-| `is_dynamic` | `boolean` | NO | Whether JS rendering is needed |
-| `robots_allowed` | `boolean` | YES | robots.txt compliance flag |
-| `created_at` | `timestamptz` | NO | Row creation timestamp |
+| `is_dynamic` | `integer` | NO | Whether JS rendering is needed |
+| `robots_allowed` | `integer` | YES | robots.txt compliance flag |
+| `created_at` | `text` | NO | Row creation timestamp |
 
 Example:
 
@@ -131,15 +109,15 @@ Example:
 | 1 | 1 | placement | https://economics.harvard.edu/placement | false |
 | 2 | 2 | placement | https://economics.stanford.edu/graduate/student-placement | false |
 
-#### `amm.ingest_run`
+#### `ingest_run`
 
 Tracks each scrape or import run.
 
 | Column | Type | Nullable | Description |
 |--------|------|----------|-------------|
-| `run_id` | `bigserial` | NO | Primary key |
-| `started_at` | `timestamptz` | NO | When the run started |
-| `finished_at` | `timestamptz` | YES | When the run finished |
+| `run_id` | `integer` | NO | Primary key |
+| `started_at` | `text` | NO | When the run started |
+| `finished_at` | `text` | YES | When the run finished |
 | `git_sha` | `text` | YES | Git commit SHA at scrape time |
 | `notes` | `text` | YES | Run metadata (e.g., `scrape:harvard`) |
 
@@ -150,16 +128,16 @@ Example:
 | 1 | 2026-02-19 05:10:28 | 2026-02-19 05:10:29 | b9227cc | scrape:harvard |
 | 2 | 2026-02-19 05:10:29 | 2026-02-19 05:10:57 | b9227cc | scrape:stanford |
 
-#### `amm.raw_fetch`
+#### `raw_fetch`
 
 Full HTTP response for each fetched page.
 
 | Column | Type | Nullable | Description |
 |--------|------|----------|-------------|
-| `fetch_id` | `bigserial` | NO | Primary key |
-| `run_id` | `bigint` | NO | FK → ingest_run |
-| `page_id` | `bigint` | NO | FK → source_page |
-| `fetched_at` | `timestamptz` | NO | Fetch timestamp |
+| `fetch_id` | `integer` | NO | Primary key |
+| `run_id` | `integer` | NO | FK → ingest_run |
+| `page_id` | `integer` | NO | FK → source_page |
+| `fetched_at` | `text` | NO | Fetch timestamp |
 | `status_code` | `integer` | YES | HTTP status code |
 | `content_type` | `text` | YES | Response Content-Type header |
 | `body_text` | `text` | YES | Full HTML response body |
@@ -175,15 +153,15 @@ Example:
 
 ### Staging Layer
 
-#### `amm.stg_placement`
+#### `stg_placement`
 
 Parsed but uncleaned placement records. Raw values are preserved exactly as extracted from HTML for debugging parser issues without re-fetching.
 
 | Column | Type | Nullable | Description |
 |--------|------|----------|-------------|
-| `stg_placement_id` | `bigserial` | NO | Primary key |
-| `fetch_id` | `bigint` | YES | FK → raw_fetch (NULL for imports) |
-| `university_id` | `bigint` | YES | FK → source_university |
+| `stg_placement_id` | `integer` | NO | Primary key |
+| `fetch_id` | `integer` | YES | FK → raw_fetch (NULL for imports) |
+| `university_id` | `integer` | YES | FK → source_university |
 | `raw_name` | `text` | YES | Candidate name as scraped |
 | `raw_field` | `text` | YES | Field of study as scraped |
 | `raw_placement` | `text` | YES | Placement institution as scraped |
@@ -191,7 +169,7 @@ Parsed but uncleaned placement records. Raw values are preserved exactly as extr
 | `raw_sector` | `text` | YES | Sector label as scraped |
 | `graduation_year` | `integer` | YES | Graduation/placement year |
 | `row_index` | `integer` | YES | Position on the source page |
-| `parsed_at` | `timestamptz` | YES | When this row was parsed |
+| `parsed_at` | `text` | YES | When this row was parsed |
 | `parse_error` | `text` | YES | Error message if parsing failed |
 
 Example:
@@ -203,15 +181,15 @@ Example:
 
 ### Core Layer
 
-#### `amm.placement`
+#### `placement`
 
 Cleaned, deduplicated, query-ready placement records. Deduplication key: `UNIQUE (university_id, candidate_name, graduation_year, placement_institution)`. Subsequent runs upsert existing records.
 
 | Column | Type | Nullable | Description |
 |--------|------|----------|-------------|
-| `placement_id` | `bigserial` | NO | Primary key |
-| `stg_placement_id` | `bigint` | YES | FK → stg_placement |
-| `university_id` | `bigint` | YES | FK → source_university |
+| `placement_id` | `integer` | NO | Primary key |
+| `stg_placement_id` | `integer` | YES | FK → stg_placement |
+| `university_id` | `integer` | YES | FK → source_university |
 | `university_name` | `text` | YES | Denormalized university name |
 | `candidate_name` | `text` | YES | Cleaned candidate name |
 | `graduation_year` | `integer` | YES | Graduation/placement year |
@@ -219,9 +197,9 @@ Cleaned, deduplicated, query-ready placement records. Deduplication key: `UNIQUE
 | `placement_institution` | `text` | YES | Cleaned institution name |
 | `placement_position` | `text` | YES | Cleaned position title |
 | `placement_sector` | `text` | YES | Classified sector (`academic`, `private`, `government`, `other`) |
-| `is_postdoc` | `boolean` | YES | Whether this is a postdoc placement |
-| `created_at` | `timestamptz` | YES | Row creation timestamp |
-| `updated_at` | `timestamptz` | YES | Last update timestamp |
+| `is_postdoc` | `integer` | YES | Whether this is a postdoc placement |
+| `created_at` | `text` | YES | Row creation timestamp |
+| `updated_at` | `text` | YES | Last update timestamp |
 
 Example:
 
@@ -280,19 +258,9 @@ source_university ─────┐
 
 ## Querying the Data
 
-### SQLite (recommended)
-
 ```bash
 sqlite3 data/placements.db
 ```
-
-### PostgreSQL
-
-```bash
-docker exec -it econjobmarket-db-1 psql -U amm -d amm
-```
-
-> Note: SQLite queries below omit the `amm.` schema prefix. For PostgreSQL, prefix table names with `amm.` (e.g., `amm.placement`).
 
 ### Browse placements (paginated)
 
@@ -378,15 +346,7 @@ slug,name,domain,state,placement_url,in_external_dataset
 mit,Massachusetts Institute of Technology,economics.mit.edu,MA,https://economics.mit.edu/academic-programs/phd-program/job-market,no
 ```
 
-### 2. Regenerate seed SQL
-
-```bash
-python -m src.tools.generate_seed_sql
-```
-
-Then apply the generated `sql/ddl/055_seed_top50.sql` to your database.
-
-### 3. Create a parser
+### 2. Create a parser
 
 Create `src/parsers/<slug>.py`. The parser is auto-discovered — no manual registration needed.
 
@@ -415,7 +375,7 @@ class MyParser(BasePlacementParser):
         return None
 ```
 
-### 4. Test and run
+### 3. Test and run
 
 ```bash
 uv run python -m src scrape <slug> --dry-run  # Test parsing without DB writes
@@ -426,29 +386,18 @@ uv run python -m src scrape <slug>            # Full scrape with DB insert
 
 ```
 .
-├── docker-compose.yml              # PostgreSQL 16 service
 ├── pyproject.toml                  # Python project config & dependencies (uv)
 ├── uv.lock                         # Locked dependency versions
-├── .env                            # Database credentials (not committed)
 ├── config/
 │   └── universities.csv            # Top 50 US econ departments (single source of truth)
-├── sql/
-│   └── ddl/
-│       ├── 001_schema.sql          # Create amm schema
-│       ├── 010_tables_raw.sql      # ingest_run, source_university, source_page, raw_fetch
-│       ├── 020_tables_staging.sql  # stg_placement
-│       ├── 030_tables_core.sql     # placement
-│       ├── 040_indexes.sql         # All indexes
-│       └── 055_seed_top50.sql      # Generated seed data for all 50 universities
 ├── data/
-│   ├── placements.db               # SQLite snapshot (auto-generated)
+│   ├── placements.db               # SQLite database (the dataset)
 │   └── imports/                    # Cached external datasets
 └── src/
     ├── __init__.py
-    ├── __main__.py                 # CLI entry point (scrape, import, export, generate)
+    ├── __main__.py                 # CLI entry point (scrape, import, init-db, generate)
     ├── scraper.py                  # 4-phase pipeline orchestrator
-    ├── database.py                 # Connection pool, insert/query helpers
-    ├── export_sqlite.py            # PostgreSQL → SQLite snapshot export
+    ├── database.py                 # SQLite connection, schema, insert/query helpers
     ├── utils.py                    # HTTP fetch, text cleaning, sector classification
     ├── parsers/
     │   ├── __init__.py             # Auto-discovery parser registry (pkgutil-based)

@@ -28,7 +28,7 @@ def generate():
         "-- Do not edit manually; re-run: python -m src.tools.generate_seed_sql",
         "",
         "-- Seed: source_university (top 50 US econ departments)",
-        "INSERT INTO amm.source_university (name, domain, country, state)",
+        "INSERT INTO source_university (name, domain, country, state)",
         "VALUES",
     ]
 
@@ -50,11 +50,11 @@ def generate():
             continue
         name = _escape(row["name"])
         url_esc = _escape(url)
-        lines.append(f"""INSERT INTO amm.source_page (university_id, page_type, url, is_dynamic, robots_allowed)
+        lines.append(f"""INSERT INTO source_page (university_id, page_type, url, is_dynamic, robots_allowed)
 SELECT u.university_id, 'placement',
        '{url_esc}',
-       FALSE, TRUE
-FROM amm.source_university u
+       0, 1
+FROM source_university u
 WHERE u.name = '{name}'
 ON CONFLICT (university_id, page_type, url) DO NOTHING;
 """)

@@ -7,6 +7,8 @@ import pathlib
 from src.scraper import run_scraper
 from src.parsers import PARSERS
 
+log = logging.getLogger(__name__)
+
 _CONFIG = pathlib.Path(__file__).resolve().parent.parent / "config" / "universities.csv"
 
 
@@ -55,12 +57,8 @@ def main():
         help="Show what would be imported without DB writes",
     )
 
-    # --- export ---
-    sp_export = sub.add_parser("export", help="Export placement data to SQLite")
-    sp_export.add_argument(
-        "--output", default=None,
-        help="Output path (default: data/placements.db)",
-    )
+    # --- init-db ---
+    sub.add_parser("init-db", help="Initialize SQLite database and seed data")
 
     # --- generate ---
     sp_gen = sub.add_parser("generate", help="Generate a parser via LLM")
@@ -96,9 +94,10 @@ def main():
             from src.importers.gap_report import run_gap_report
             run_gap_report()
 
-    elif args.command == "export":
-        from src.export_sqlite import export_to_sqlite
-        export_to_sqlite(db_path=args.output)
+    elif args.command == "init-db":
+        from src.database import init_db
+        init_db()
+        log.info("Database initialized at data/placements.db")
 
     elif args.command == "generate":
         if args.batch:
