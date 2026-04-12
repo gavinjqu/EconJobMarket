@@ -7,7 +7,7 @@ external econphdplacements.com import instead.
 """
 
 import logging
-from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 
 log = logging.getLogger(__name__)

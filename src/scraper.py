@@ -9,6 +9,7 @@ Pipeline per university:
   5. Transform staging -> core placement rows
   6. Finish the ingest_run
 """
+
 import csv
 import logging
 import pathlib
@@ -16,17 +17,28 @@ import subprocess
 from contextlib import contextmanager
 
 from src.database import (
-    get_conn, close_pool, init_db,
-    insert_ingest_run, finish_ingest_run,
-    insert_raw_fetch, insert_stg_placement, insert_placement,
-    get_pages_for_university, get_unprocessed_staging,
-    get_university_by_slug, get_university_by_name,
-)
-from src.utils import (
-    fetch_url, body_hash, clean_name, clean_field, clean_text,
-    classify_sector, detect_postdoc,
+    finish_ingest_run,
+    get_conn,
+    get_pages_for_university,
+    get_university_by_name,
+    get_university_by_slug,
+    get_unprocessed_staging,
+    init_db,
+    insert_ingest_run,
+    insert_placement,
+    insert_raw_fetch,
+    insert_stg_placement,
 )
 from src.parsers import PARSERS
+from src.utils import (
+    body_hash,
+    classify_sector,
+    clean_field,
+    clean_name,
+    clean_text,
+    detect_postdoc,
+    fetch_url,
+)
 
 log = logging.getLogger(__name__)
 
@@ -114,8 +126,7 @@ def _scrape_university(slug: str, dry_run: bool):
             if university is None:
                 university = get_university_by_slug(conn, slug)
             if university is None:
-                log.error("No university with slug '%s'. Run seed data first.",
-                          slug)
+                log.error("No university with slug '%s'. Run seed data first.", slug)
                 return
             university_id, university_name = university
 
@@ -125,8 +136,7 @@ def _scrape_university(slug: str, dry_run: bool):
                 # Use the first page_id for raw_fetch tracking
                 page_id = db_pages[0][0]
 
-            run_id = insert_ingest_run(conn, git_sha=_git_sha(),
-                                       notes=f"scrape:{slug}")
+            run_id = insert_ingest_run(conn, git_sha=_git_sha(), notes=f"scrape:{slug}")
             log.info("Created ingest_run %d for %s", run_id, university_name)
 
     # --- Phase 1: Fetch and parse ---
@@ -153,8 +163,12 @@ def _scrape_university(slug: str, dry_run: bool):
 
                 if not dry_run:
                     fetch_id = insert_raw_fetch(
-                        conn, run_id, effective_page_id,
-                        status, ctype, html,
+                        conn,
+                        run_id,
+                        effective_page_id,
+                        status,
+                        ctype,
+                        html,
                         body_hash(html) if html else None,
                         error,
                     )
@@ -168,11 +182,9 @@ def _scrape_university(slug: str, dry_run: bool):
                         log.exception("Parse failed for %s", current_url)
                         parsed_rows = []
                     all_parsed.append((effective_page_id, fetch_id, parsed_rows))
-                    log.info("Parsed %d rows from %s",
-                             len(parsed_rows), current_url)
+                    log.info("Parsed %d rows from %s", len(parsed_rows), current_url)
 
-                next_url = (parser.get_next_page_url(html, current_url)
-                            if html else None)
+                next_url = parser.get_next_page_url(html, current_url) if html else None
                 current_url = next_url
 
     # --- Phase 2: Insert staging rows ---
@@ -182,7 +194,9 @@ def _scrape_university(slug: str, dry_run: bool):
             for page_id, fetch_id, rows in all_parsed:
                 for row in rows:
                     insert_stg_placement(
-                        conn, fetch_id, university_id,
+                        conn,
+                        fetch_id,
+                        university_id,
                         raw_name=row.raw_name,
                         raw_field=row.raw_field,
                         raw_placement=row.raw_placement,
@@ -200,29 +214,43 @@ def _scrape_university(slug: str, dry_run: bool):
             unprocessed = get_unprocessed_staging(conn, run_id)
             core_count = 0
             for row in unprocessed:
-                (stg_id, fetch_id, uni_id, raw_name, raw_field,
-                 raw_placement, raw_position, raw_sector,
-                 grad_year, uni_name) = row
+                (
+                    stg_id,
+                    fetch_id,
+                    uni_id,
+                    raw_name,
+                    raw_field,
+                    raw_placement,
+                    raw_position,
+                    raw_sector,
+                    grad_year,
+                    uni_name,
+                ) = row
 
                 candidate = clean_name(raw_name)
                 field = clean_field(raw_field)
                 institution = clean_text(raw_placement)
                 position = clean_text(raw_position)
-                sector = classify_sector(
-                    (raw_placement or "") + " " + (raw_position or "")
-                )
+                sector = classify_sector((raw_placement or "") + " " + (raw_position or ""))
                 postdoc = detect_postdoc(institution, position)
 
                 if candidate and institution:
                     insert_placement(
-                        conn, stg_id, uni_id, uni_name,
-                        candidate, grad_year, field,
-                        institution, position, sector, postdoc,
+                        conn,
+                        stg_id,
+                        uni_id,
+                        uni_name,
+                        candidate,
+                        grad_year,
+                        field,
+                        institution,
+                        position,
+                        sector,
+                        postdoc,
                     )
                     core_count += 1
                 else:
-                    log.warning("Skipping stg_id=%d: missing name or placement",
-                                stg_id)
+                    log.warning("Skipping stg_id=%d: missing name or placement", stg_id)
             log.info("Inserted/updated %d core placement rows", core_count)
 
     # --- Phase 4: Finish ingest run ---

@@ -6,7 +6,9 @@ Note: candidate names are not published — only placement destinations.
 """
 
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -33,7 +35,6 @@ class NorthwesternParser(BasePlacementParser):
                 continue
 
             # Walk siblings until next h3
-            current_sector = None
             for sib in h3.find_next_siblings():
                 if sib.name == "h3":
                     break
@@ -45,10 +46,8 @@ class NorthwesternParser(BasePlacementParser):
                             continue
                         if child.name == "h4":
                             sector_text = child.get_text(strip=True).lower()
-                            current_sector = "academic"
                             for key in _SECTOR_MAP:
                                 if key in sector_text:
-                                    current_sector = _SECTOR_MAP[key]
                                     break
                         elif child.name == "div":
                             for ul in child.find_all("ul"):
@@ -56,16 +55,17 @@ class NorthwesternParser(BasePlacementParser):
                                     text = li.get_text(strip=True)
                                     if not text:
                                         continue
-                                    rows.append(PlacementRow(
-                                        raw_name=f"Northwestern PhD ({year})",
-                                        raw_field=None,
-                                        raw_placement=text,
-                                        raw_position=None,
-                                        graduation_year=year,
-                                        row_index=global_index,
-                                    ))
+                                    rows.append(
+                                        PlacementRow(
+                                            raw_name=f"Northwestern PhD ({year})",
+                                            raw_field=None,
+                                            raw_placement=text,
+                                            raw_position=None,
+                                            graduation_year=year,
+                                            row_index=global_index,
+                                        )
+                                    )
                                     global_index += 1
 
-        log.info("Parsed %d placement rows from Northwestern (no candidate names)",
-                 len(rows))
+        log.info("Parsed %d placement rows from Northwestern (no candidate names)", len(rows))
         return rows

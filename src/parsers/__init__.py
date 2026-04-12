@@ -5,8 +5,8 @@ with a non-empty ``university_slug`` attribute is registered automatically.
 """
 
 import importlib
-import pkgutil
 import pathlib
+import pkgutil
 
 from src.parsers.base import BasePlacementParser
 

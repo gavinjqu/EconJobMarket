@@ -1,6 +1,8 @@
-import re
 import logging
+import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -34,12 +36,16 @@ class TuftsParser(BasePlacementParser):
                         year = None
                         if len(tds) >= 3:
                             year = parse_year(tds[2].get_text(strip=True))
-                        rows.append(PlacementRow(
-                            raw_name=raw_name, raw_field=None,
-                            raw_placement=raw_placement, raw_position=None,
-                            graduation_year=year or current_year,
-                            row_index=global_index,
-                        ))
+                        rows.append(
+                            PlacementRow(
+                                raw_name=raw_name,
+                                raw_field=None,
+                                raw_placement=raw_placement,
+                                raw_position=None,
+                                graduation_year=year or current_year,
+                                row_index=global_index,
+                            )
+                        )
                         global_index += 1
 
             elif el.name in ("ul", "ol") and current_year is not None:
@@ -50,7 +56,7 @@ class TuftsParser(BasePlacementParser):
                     bold = li.find(["strong", "b"])
                     if bold:
                         raw_name = bold.get_text(strip=True)
-                        remainder = text[len(raw_name):].strip()
+                        remainder = text[len(raw_name) :].strip()
                         remainder = re.sub(r"^[\s,\-–—:]+", "", remainder).strip()
                     else:
                         parts = re.split(r"\s*[–—-]\s*", text, maxsplit=1)
@@ -58,11 +64,16 @@ class TuftsParser(BasePlacementParser):
                         remainder = parts[1].strip() if len(parts) > 1 else ""
                     if not raw_name:
                         continue
-                    rows.append(PlacementRow(
-                        raw_name=raw_name, raw_field=None,
-                        raw_placement=remainder or None, raw_position=None,
-                        graduation_year=current_year, row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name=raw_name,
+                            raw_field=None,
+                            raw_placement=remainder or None,
+                            raw_position=None,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
         log.info("Parsed %d placement rows from Tufts", len(rows))

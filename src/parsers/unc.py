@@ -6,8 +6,9 @@ Year headings (h3) precede each table.
 """
 
 import logging
-import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -47,14 +48,16 @@ class UNCParser(BasePlacementParser):
                     if len(tds) >= 3:
                         raw_position = tds[2].get_text(strip=True) or None
 
-                    rows.append(PlacementRow(
-                        raw_name=raw_name,
-                        raw_field=None,
-                        raw_placement=raw_placement,
-                        raw_position=raw_position,
-                        graduation_year=current_year,
-                        row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name=raw_name,
+                            raw_field=None,
+                            raw_placement=raw_placement,
+                            raw_position=raw_position,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
         log.info("Parsed %d placement rows from UNC", len(rows))

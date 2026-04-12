@@ -5,9 +5,11 @@ in <p> tags, followed by <ul><li> entries with "Institution; Position" format.
 Note: candidate names are not published — only institution and position.
 """
 
-import re
 import logging
+import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 
 log = logging.getLogger(__name__)
@@ -49,16 +51,17 @@ class BerkeleyParser(BasePlacementParser):
                             raw_placement = text
                             raw_position = None
 
-                        rows.append(PlacementRow(
-                            raw_name=f"Berkeley PhD ({current_year})",
-                            raw_field=None,
-                            raw_placement=raw_placement,
-                            raw_position=raw_position,
-                            graduation_year=current_year,
-                            row_index=global_index,
-                        ))
+                        rows.append(
+                            PlacementRow(
+                                raw_name=f"Berkeley PhD ({current_year})",
+                                raw_field=None,
+                                raw_placement=raw_placement,
+                                raw_position=raw_position,
+                                graduation_year=current_year,
+                                row_index=global_index,
+                            )
+                        )
                         global_index += 1
 
-        log.info("Parsed %d placement rows from Berkeley (no candidate names)",
-                 len(rows))
+        log.info("Parsed %d placement rows from Berkeley (no candidate names)", len(rows))
         return rows

@@ -6,10 +6,11 @@ and optionally Field/Area and Position. Some years may use paragraph
 or list-based formats instead of tables.
 """
 
-import re
 import logging
-from urllib.parse import urljoin
+import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -34,8 +35,17 @@ class WashingtonParser(BasePlacementParser):
                 mapping["name"] = i
             elif "field" in text or "area" in text or "specializ" in text:
                 mapping["field"] = i
-            elif any(kw in text for kw in ("placement", "employer", "institution",
-                                           "organization", "company", "firm")):
+            elif any(
+                kw in text
+                for kw in (
+                    "placement",
+                    "employer",
+                    "institution",
+                    "organization",
+                    "company",
+                    "firm",
+                )
+            ):
                 mapping["placement"] = i
             elif "position" in text or "title" in text or "role" in text:
                 mapping["position"] = i
@@ -88,14 +98,16 @@ class WashingtonParser(BasePlacementParser):
                 if parsed:
                     year = parsed
 
-            rows.append(PlacementRow(
-                raw_name=raw_name,
-                raw_field=_cell("field"),
-                raw_placement=_cell("placement"),
-                raw_position=_cell("position"),
-                graduation_year=year,
-                row_index=global_index,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=raw_name,
+                    raw_field=_cell("field"),
+                    raw_placement=_cell("placement"),
+                    raw_position=_cell("position"),
+                    graduation_year=year,
+                    row_index=global_index,
+                )
+            )
             global_index += 1
 
         return global_index
@@ -120,14 +132,16 @@ class WashingtonParser(BasePlacementParser):
 
             raw_placement = parts[1].strip().strip(",; ") if len(parts) > 1 else None
 
-            rows.append(PlacementRow(
-                raw_name=raw_name,
-                raw_field=None,
-                raw_placement=raw_placement,
-                raw_position=None,
-                graduation_year=current_year,
-                row_index=global_index,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=raw_name,
+                    raw_field=None,
+                    raw_placement=raw_placement,
+                    raw_position=None,
+                    graduation_year=current_year,
+                    row_index=global_index,
+                )
+            )
             global_index += 1
 
         return global_index
@@ -152,14 +166,16 @@ class WashingtonParser(BasePlacementParser):
 
             raw_placement = parts[1].strip().strip(",; ") if len(parts) > 1 else None
 
-            rows.append(PlacementRow(
-                raw_name=raw_name,
-                raw_field=None,
-                raw_placement=raw_placement,
-                raw_position=None,
-                graduation_year=current_year,
-                row_index=global_index,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=raw_name,
+                    raw_field=None,
+                    raw_placement=raw_placement,
+                    raw_position=None,
+                    graduation_year=current_year,
+                    row_index=global_index,
+                )
+            )
             global_index += 1
 
         return global_index
@@ -175,9 +191,7 @@ class WashingtonParser(BasePlacementParser):
         current_year = None
 
         # Walk through headings, tables, and lists in document order
-        tags_of_interest = soup.find_all(
-            ["h2", "h3", "h4", "h5", "table", "ul", "ol"]
-        )
+        tags_of_interest = soup.find_all(["h2", "h3", "h4", "h5", "table", "ul", "ol"])
 
         for tag in tags_of_interest:
             # ---- year headings ----
@@ -190,16 +204,12 @@ class WashingtonParser(BasePlacementParser):
 
             # ---- tables ----
             if tag.name == "table":
-                global_index = self._parse_table(
-                    tag, current_year, rows, global_index
-                )
+                global_index = self._parse_table(tag, current_year, rows, global_index)
                 continue
 
             # ---- lists ----
             if tag.name in ("ul", "ol") and current_year:
-                global_index = self._parse_list_items(
-                    tag, current_year, rows, global_index
-                )
+                global_index = self._parse_list_items(tag, current_year, rows, global_index)
                 continue
 
         # If no structured elements found, try paragraph-based fallback
@@ -212,9 +222,7 @@ class WashingtonParser(BasePlacementParser):
                         current_year = year
                     continue
                 if el.name == "div" and current_year:
-                    global_index = self._parse_paragraphs(
-                        el, current_year, rows, global_index
-                    )
+                    global_index = self._parse_paragraphs(el, current_year, rows, global_index)
 
         log.info("Parsed %d placement rows from Washington", len(rows))
         return rows

@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - run: uv run ruff check src/
+      - run: uv run ruff format --check src/
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - run: uv run pyright
+
+  import-check:
+    name: Parser Import Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - name: Verify all 75 parsers load
+        run: |
+          uv run python -c "
+          from src.parsers import PARSERS
+          print(f'{len(PARSERS)} parsers loaded')
+          assert len(PARSERS) >= 75, f'Expected 75+ parsers, got {len(PARSERS)}'
+          print('All parsers imported successfully')
+          "
+
+  smoke-test:
+    name: Smoke Test (dry-run)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - name: Init database and dry-run scrape
+        run: |
+          uv run python -m src init-db
+          uv run python -m src scrape harvard --dry-run

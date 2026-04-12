@@ -1,6 +1,7 @@
-import re
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -26,7 +27,7 @@ class ColoradoParser(BasePlacementParser):
             if el.name == "ul" and current_year is not None:
                 for li in el.find_all("li"):
                     full_text = li.get_text(separator="\n", strip=True)
-                    lines = [l.strip() for l in full_text.split("\n") if l.strip()]
+                    lines = [ln.strip() for ln in full_text.split("\n") if ln.strip()]
                     if not lines:
                         continue
                     # Name is in <b> tag or first line
@@ -47,14 +48,16 @@ class ColoradoParser(BasePlacementParser):
                         else:
                             raw_placement = placement_text
 
-                    rows.append(PlacementRow(
-                        raw_name=raw_name,
-                        raw_field=None,
-                        raw_placement=raw_placement,
-                        raw_position=raw_position,
-                        graduation_year=current_year,
-                        row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name=raw_name,
+                            raw_field=None,
+                            raw_placement=raw_placement,
+                            raw_position=raw_position,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
         log.info("Parsed %d placement rows from Colorado", len(rows))

@@ -5,8 +5,9 @@ and collapse divs containing p tags: "Name, Position, Institution".
 """
 
 import logging
-import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -52,14 +53,16 @@ class MichiganStateParser(BasePlacementParser):
 
                 raw_placement = parts[1].strip().strip(",; ") if len(parts) > 1 else None
 
-                rows.append(PlacementRow(
-                    raw_name=raw_name,
-                    raw_field=None,
-                    raw_placement=raw_placement,
-                    raw_position=None,
-                    graduation_year=year,
-                    row_index=global_index,
-                ))
+                rows.append(
+                    PlacementRow(
+                        raw_name=raw_name,
+                        raw_field=None,
+                        raw_placement=raw_placement,
+                        raw_position=None,
+                        graduation_year=year,
+                        row_index=global_index,
+                    )
+                )
                 global_index += 1
 
         log.info("Parsed %d placement rows from Michigan State", len(rows))

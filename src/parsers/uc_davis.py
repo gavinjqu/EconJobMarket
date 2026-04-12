@@ -7,7 +7,9 @@ PhD Date is in "Mon-YY" format (e.g. "Jun-25").
 
 import logging
 import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 
 log = logging.getLogger(__name__)
@@ -61,14 +63,16 @@ class UCDavisParser(BasePlacementParser):
             if len(tds) >= 5:
                 raw_position = tds[4].get_text(strip=True) or None
 
-            rows.append(PlacementRow(
-                raw_name=raw_name,
-                raw_field=None,
-                raw_placement=raw_placement,
-                raw_position=raw_position,
-                graduation_year=year,
-                row_index=global_index,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=raw_name,
+                    raw_field=None,
+                    raw_placement=raw_placement,
+                    raw_position=raw_position,
+                    graduation_year=year,
+                    row_index=global_index,
+                )
+            )
             global_index += 1
 
         log.info("Parsed %d placement rows from UC Davis", len(rows))

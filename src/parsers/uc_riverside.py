@@ -1,6 +1,8 @@
-import re
 import logging
-from bs4 import BeautifulSoup, NavigableString
+import re
+
+from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -35,7 +37,7 @@ class UCRiversideParser(BasePlacementParser):
                 # Try to extract name from the text
                 # Format: "Name\nPosition, Institution" or just "Name"
                 lines = el.get_text(separator="\n", strip=True).split("\n")
-                lines = [l.strip() for l in lines if l.strip()]
+                lines = [ln.strip() for ln in lines if ln.strip()]
                 if not lines:
                     continue
                 raw_name = lines[0]
@@ -50,14 +52,16 @@ class UCRiversideParser(BasePlacementParser):
                     else:
                         raw_placement = placement_text
 
-                rows.append(PlacementRow(
-                    raw_name=raw_name,
-                    raw_field=None,
-                    raw_placement=raw_placement,
-                    raw_position=raw_position,
-                    graduation_year=current_year,
-                    row_index=global_index,
-                ))
+                rows.append(
+                    PlacementRow(
+                        raw_name=raw_name,
+                        raw_field=None,
+                        raw_placement=raw_placement,
+                        raw_position=raw_position,
+                        graduation_year=current_year,
+                        row_index=global_index,
+                    )
+                )
                 global_index += 1
 
         log.info("Parsed %d placement rows from UC Riverside", len(rows))

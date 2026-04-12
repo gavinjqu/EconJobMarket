@@ -5,10 +5,10 @@ The page lists placements by year, with each year as a heading element
 Each table row has three cells: Name, Placement, Position.
 """
 
-import re
 import logging
-from urllib.parse import urljoin
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -42,14 +42,16 @@ class ArizonaParser(BasePlacementParser):
                 raw_position = tds[2].get_text(strip=True) if len(tds) > 2 else None
                 raw_position = raw_position or None
 
-                rows.append(PlacementRow(
-                    raw_name=raw_name,
-                    raw_field=None,
-                    raw_placement=raw_placement,
-                    raw_position=raw_position,
-                    graduation_year=year,
-                    row_index=global_index,
-                ))
+                rows.append(
+                    PlacementRow(
+                        raw_name=raw_name,
+                        raw_field=None,
+                        raw_placement=raw_placement,
+                        raw_position=raw_position,
+                        graduation_year=year,
+                        row_index=global_index,
+                    )
+                )
                 global_index += 1
 
         log.info("Parsed %d placement rows from Arizona", len(rows))
@@ -61,7 +63,11 @@ class ArizonaParser(BasePlacementParser):
         # Check previous siblings of the table (or its wrapper div)
         node = table
         # If table is inside a div.table-responsive, start from that div
-        if table.parent and table.parent.name == "div" and "table-responsive" in (table.parent.get("class") or []):
+        if (
+            table.parent
+            and table.parent.name == "div"
+            and "table-responsive" in (table.parent.get("class") or [])
+        ):
             node = table.parent
 
         for sibling in _previous_element_siblings(node):

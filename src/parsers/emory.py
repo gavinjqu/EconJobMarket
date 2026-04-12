@@ -14,6 +14,7 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -38,8 +39,7 @@ class EmoryParser(BasePlacementParser):
         log.info("Fetching Emory CSV from %s", csv_url)
 
         try:
-            resp = requests.get(csv_url, headers={"User-Agent": "Mozilla/5.0"},
-                                timeout=15)
+            resp = requests.get(csv_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
             resp.raise_for_status()
         except Exception:
             log.exception("Failed to fetch Emory CSV from %s", csv_url)
@@ -57,14 +57,16 @@ class EmoryParser(BasePlacementParser):
 
             year = parse_year(year_text)
 
-            rows.append(PlacementRow(
-                raw_name=name,
-                raw_field=None,
-                raw_placement=placement or None,
-                raw_position=None,
-                graduation_year=year,
-                row_index=idx,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=name,
+                    raw_field=None,
+                    raw_placement=placement or None,
+                    raw_position=None,
+                    graduation_year=year,
+                    row_index=idx,
+                )
+            )
             idx += 1
 
         log.info("Parsed %d placement rows from Emory", len(rows))

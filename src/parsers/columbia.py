@@ -4,9 +4,10 @@ Columbia lists placements by year in <h3> headings followed by <table> elements
 with columns: Candidate, Fields, Placement. All years on a single page.
 """
 
-import re
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -45,14 +46,16 @@ class ColumbiaParser(BasePlacementParser):
                 if not raw_name:
                     continue
 
-                rows.append(PlacementRow(
-                    raw_name=raw_name,
-                    raw_field=raw_field,
-                    raw_placement=raw_placement,
-                    raw_position=None,
-                    graduation_year=year,
-                    row_index=global_index,
-                ))
+                rows.append(
+                    PlacementRow(
+                        raw_name=raw_name,
+                        raw_field=raw_field,
+                        raw_placement=raw_placement,
+                        raw_position=None,
+                        graduation_year=year,
+                        row_index=global_index,
+                    )
+                )
                 global_index += 1
 
         log.info("Parsed %d placement rows from Columbia", len(rows))

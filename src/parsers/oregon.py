@@ -10,9 +10,10 @@ followed by h3 student names and ul/li lists with metadata including:
 
 import logging
 import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
-from src.utils import parse_year
 
 log = logging.getLogger(__name__)
 
@@ -53,14 +54,16 @@ class OregonParser(BasePlacementParser):
                         elif text.lower().startswith("fields:"):
                             field = text.split(":", 1)[1].strip()
 
-                rows.append(PlacementRow(
-                    raw_name=name,
-                    raw_field=field,
-                    raw_placement=placement,
-                    raw_position=None,
-                    graduation_year=current_year,
-                    row_index=idx,
-                ))
+                rows.append(
+                    PlacementRow(
+                        raw_name=name,
+                        raw_field=field,
+                        raw_placement=placement,
+                        raw_position=None,
+                        graduation_year=current_year,
+                        row_index=idx,
+                    )
+                )
                 idx += 1
 
         log.info("Parsed %d placement rows from Oregon", len(rows))

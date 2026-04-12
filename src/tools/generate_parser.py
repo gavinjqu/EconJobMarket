@@ -116,6 +116,7 @@ def _smoke_test(slug: str, html: str, url: str):
 
         # Find the parser class
         from src.parsers.base import BasePlacementParser
+
         parser_cls = None
         for attr in dir(mod):
             obj = getattr(mod, attr)
@@ -138,8 +139,12 @@ def _smoke_test(slug: str, html: str, url: str):
 
         if rows:
             sample = rows[0]
-            log.info("  First row: name=%s, year=%s, placement=%s",
-                     sample.raw_name, sample.graduation_year, sample.raw_placement)
+            log.info(
+                "  First row: name=%s, year=%s, placement=%s",
+                sample.raw_name,
+                sample.graduation_year,
+                sample.raw_placement,
+            )
             years = {r.graduation_year for r in rows if r.graduation_year}
             if years:
                 log.info("  Year range: %d-%d", min(years), max(years))
@@ -153,8 +158,10 @@ def _smoke_test(slug: str, html: str, url: str):
 
 if __name__ == "__main__":
     import argparse
-    logging.basicConfig(level=logging.INFO,
-                        format="%(asctime)s %(levelname)-8s %(name)s: %(message)s")
+
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)-8s %(name)s: %(message)s"
+    )
     p = argparse.ArgumentParser()
     p.add_argument("slug")
     p.add_argument("--url", default=None)

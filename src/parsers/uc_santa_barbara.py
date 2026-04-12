@@ -9,10 +9,11 @@ Note: This page does NOT include student names — only institution and position
 raw_name is set to "Unknown" for every entry.
 """
 
-import re
 import logging
-from urllib.parse import urljoin
+import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -89,14 +90,16 @@ class UCSantaBarbaraParser(BasePlacementParser):
                     if not institution:
                         continue
 
-                    rows.append(PlacementRow(
-                        raw_name="Unknown",
-                        raw_field=None,
-                        raw_placement=institution,
-                        raw_position=position,
-                        graduation_year=current_year,
-                        row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name="Unknown",
+                            raw_field=None,
+                            raw_placement=institution,
+                            raw_position=position,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
         log.info("Parsed %d placement rows from UC Santa Barbara", len(rows))

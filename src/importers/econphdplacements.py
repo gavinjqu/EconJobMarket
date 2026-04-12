@@ -16,15 +16,15 @@ import pathlib
 import requests
 
 from src.database import (
-    get_conn,
-    insert_ingest_run,
     finish_ingest_run,
-    insert_stg_placement,
-    insert_placement,
-    get_unprocessed_staging,
+    get_conn,
     get_university_by_name,
+    get_unprocessed_staging,
+    insert_ingest_run,
+    insert_placement,
+    insert_stg_placement,
 )
-from src.utils import clean_name, clean_field, clean_text, classify_sector, detect_postdoc
+from src.utils import classify_sector, clean_field, clean_name, clean_text, detect_postdoc
 
 log = logging.getLogger(__name__)
 
@@ -100,8 +100,11 @@ def run_import(dry_run: bool = False):
             if dept in target_slugs:
                 records.append(rec)
 
-    log.info("Loaded %d records for target schools (from %d total)",
-             len(records), sum(1 for _ in open(jsonl_path)))
+    log.info(
+        "Loaded %d records for target schools (from %d total)",
+        len(records),
+        sum(1 for _ in open(jsonl_path)),
+    )
 
     if dry_run:
         # Show summary by department
@@ -164,9 +167,18 @@ def run_import(dry_run: bool = False):
         unprocessed = get_unprocessed_staging(conn, run_id)
         core_count = 0
         for row in unprocessed:
-            (stg_id, fetch_id, uni_id, raw_name, raw_field,
-             raw_placement, raw_position, raw_sector,
-             grad_year, uni_name) = row
+            (
+                stg_id,
+                fetch_id,
+                uni_id,
+                raw_name,
+                raw_field,
+                raw_placement,
+                raw_position,
+                raw_sector,
+                grad_year,
+                uni_name,
+            ) = row
 
             candidate = clean_name(raw_name)
             field = clean_field(raw_field)
@@ -182,9 +194,17 @@ def run_import(dry_run: bool = False):
 
             if candidate and institution:
                 insert_placement(
-                    conn, stg_id, uni_id, uni_name,
-                    candidate, grad_year, field,
-                    institution, position, sector, postdoc,
+                    conn,
+                    stg_id,
+                    uni_id,
+                    uni_name,
+                    candidate,
+                    grad_year,
+                    field,
+                    institution,
+                    position,
+                    sector,
+                    postdoc,
                 )
                 core_count += 1
             else:

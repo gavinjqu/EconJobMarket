@@ -1,6 +1,8 @@
-import re
 import logging
+import re
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -10,6 +12,7 @@ log = logging.getLogger(__name__)
 class UICParser(BasePlacementParser):
     """UIC placement page may be JS-rendered. This parser handles
     whatever HTML is available from a static fetch."""
+
     university_slug = "uic"
 
     def parse(self, html: str, page_url: str) -> list[PlacementRow]:
@@ -36,12 +39,16 @@ class UICParser(BasePlacementParser):
                         year = None
                         if len(tds) >= 3:
                             year = parse_year(tds[2].get_text(strip=True))
-                        rows.append(PlacementRow(
-                            raw_name=raw_name, raw_field=None,
-                            raw_placement=raw_placement, raw_position=None,
-                            graduation_year=year or current_year,
-                            row_index=global_index,
-                        ))
+                        rows.append(
+                            PlacementRow(
+                                raw_name=raw_name,
+                                raw_field=None,
+                                raw_placement=raw_placement,
+                                raw_position=None,
+                                graduation_year=year or current_year,
+                                row_index=global_index,
+                            )
+                        )
                         global_index += 1
 
             elif el.name in ("ul", "ol") and current_year is not None:
@@ -54,11 +61,16 @@ class UICParser(BasePlacementParser):
                     raw_placement = parts[1].strip() if len(parts) > 1 else None
                     if not raw_name:
                         continue
-                    rows.append(PlacementRow(
-                        raw_name=raw_name, raw_field=None,
-                        raw_placement=raw_placement, raw_position=None,
-                        graduation_year=current_year, row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name=raw_name,
+                            raw_field=None,
+                            raw_placement=raw_placement,
+                            raw_position=None,
+                            graduation_year=current_year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
         if not rows:

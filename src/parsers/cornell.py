@@ -5,7 +5,9 @@ Year, Name, Position or Affiliation, Research Area, Program.
 """
 
 import logging
+
 from bs4 import BeautifulSoup
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 from src.utils import parse_year
 
@@ -42,14 +44,16 @@ class CornellParser(BasePlacementParser):
             if len(tds) >= 4:
                 raw_field = tds[3].get_text(strip=True) or None
 
-            rows.append(PlacementRow(
-                raw_name=raw_name,
-                raw_field=raw_field,
-                raw_placement=raw_placement,
-                raw_position=None,
-                graduation_year=year,
-                row_index=global_index,
-            ))
+            rows.append(
+                PlacementRow(
+                    raw_name=raw_name,
+                    raw_field=raw_field,
+                    raw_placement=raw_placement,
+                    raw_position=None,
+                    graduation_year=year,
+                    row_index=global_index,
+                )
+            )
             global_index += 1
 
         log.info("Parsed %d placement rows from Cornell", len(rows))

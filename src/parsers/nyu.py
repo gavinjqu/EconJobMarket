@@ -5,9 +5,11 @@ Each section contains <p> tags with institutions separated by <br>.
 Note: candidate names are not published — only placement destinations.
 """
 
-import re
 import logging
+import re
+
 from bs4 import BeautifulSoup, NavigableString
+
 from src.parsers.base import BasePlacementParser, PlacementRow
 
 log = logging.getLogger(__name__)
@@ -52,16 +54,17 @@ class NYUParser(BasePlacementParser):
                     if not line:
                         continue
 
-                    rows.append(PlacementRow(
-                        raw_name=f"NYU PhD ({summary_text})",  # no names published
-                        raw_field=None,
-                        raw_placement=line,
-                        raw_position=None,
-                        graduation_year=year,
-                        row_index=global_index,
-                    ))
+                    rows.append(
+                        PlacementRow(
+                            raw_name=f"NYU PhD ({summary_text})",  # no names published
+                            raw_field=None,
+                            raw_placement=line,
+                            raw_position=None,
+                            graduation_year=year,
+                            row_index=global_index,
+                        )
+                    )
                     global_index += 1
 
-        log.info("Parsed %d placement rows from NYU (no candidate names)",
-                 len(rows))
+        log.info("Parsed %d placement rows from NYU (no candidate names)", len(rows))
         return rows

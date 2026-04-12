@@ -1,4 +1,5 @@
 """SQLite database layer."""
+
 import csv
 import logging
 import pathlib
@@ -154,6 +155,7 @@ def close_pool():
 
 # --------------- insert helpers ---------------
 
+
 def insert_ingest_run(conn, git_sha=None, notes=None):
     sql = "INSERT INTO ingest_run (git_sha, notes) VALUES (?, ?)"
     cur = conn.execute(sql, (git_sha, notes))
@@ -167,21 +169,33 @@ def finish_ingest_run(conn, run_id):
     )
 
 
-def insert_raw_fetch(conn, run_id, page_id, status_code, content_type,
-                     body_text, body_hash, error=None):
+def insert_raw_fetch(
+    conn, run_id, page_id, status_code, content_type, body_text, body_hash, error=None
+):
     sql = """
         INSERT INTO raw_fetch
             (run_id, page_id, status_code, content_type, body_text, body_hash, error)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """
-    cur = conn.execute(sql, (run_id, page_id, status_code, content_type,
-                             body_text, body_hash, error))
+    cur = conn.execute(
+        sql, (run_id, page_id, status_code, content_type, body_text, body_hash, error)
+    )
     return cur.lastrowid
 
 
-def insert_stg_placement(conn, fetch_id, university_id, raw_name, raw_field,
-                         raw_placement, raw_position, raw_sector,
-                         graduation_year, row_index, parse_error=None):
+def insert_stg_placement(
+    conn,
+    fetch_id,
+    university_id,
+    raw_name,
+    raw_field,
+    raw_placement,
+    raw_position,
+    raw_sector,
+    graduation_year,
+    row_index,
+    parse_error=None,
+):
     sql = """
         INSERT INTO stg_placement
             (fetch_id, university_id, raw_name, raw_field, raw_placement,
@@ -189,16 +203,37 @@ def insert_stg_placement(conn, fetch_id, university_id, raw_name, raw_field,
              parsed_at, parse_error)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
     """
-    cur = conn.execute(sql, (fetch_id, university_id, raw_name, raw_field,
-                             raw_placement, raw_position, raw_sector,
-                             graduation_year, row_index, parse_error))
+    cur = conn.execute(
+        sql,
+        (
+            fetch_id,
+            university_id,
+            raw_name,
+            raw_field,
+            raw_placement,
+            raw_position,
+            raw_sector,
+            graduation_year,
+            row_index,
+            parse_error,
+        ),
+    )
     return cur.lastrowid
 
 
-def insert_placement(conn, stg_placement_id, university_id, university_name,
-                     candidate_name, graduation_year, field_of_study,
-                     placement_institution, placement_position,
-                     placement_sector, is_postdoc):
+def insert_placement(
+    conn,
+    stg_placement_id,
+    university_id,
+    university_name,
+    candidate_name,
+    graduation_year,
+    field_of_study,
+    placement_institution,
+    placement_position,
+    placement_sector,
+    is_postdoc,
+):
     sql = """
         INSERT INTO placement
             (stg_placement_id, university_id, university_name,
@@ -214,10 +249,21 @@ def insert_placement(conn, stg_placement_id, university_id, university_name,
             is_postdoc            = EXCLUDED.is_postdoc,
             updated_at            = datetime('now')
     """
-    cur = conn.execute(sql, (stg_placement_id, university_id, university_name,
-                             candidate_name, graduation_year, field_of_study,
-                             placement_institution, placement_position,
-                             placement_sector, is_postdoc))
+    cur = conn.execute(
+        sql,
+        (
+            stg_placement_id,
+            university_id,
+            university_name,
+            candidate_name,
+            graduation_year,
+            field_of_study,
+            placement_institution,
+            placement_position,
+            placement_sector,
+            is_postdoc,
+        ),
+    )
     # For upserts, lastrowid may be 0 on conflict update; query the actual id
     if cur.lastrowid:
         return cur.lastrowid
