@@ -4,7 +4,6 @@ import re
 from bs4 import BeautifulSoup
 
 from src.parsers.base import BasePlacementParser, PlacementRow
-from src.utils import parse_year
 
 log = logging.getLogger(__name__)
 
@@ -16,65 +15,59 @@ class BrandeisParser(BasePlacementParser):
         soup = BeautifulSoup(html, "html.parser")
         rows = []
         global_index = 0
-        current_year = None
 
-        for el in soup.find_all(["h2", "h3", "h4", "table", "ul", "ol"]):
-            if el.name in ("h2", "h3", "h4"):
-                year = parse_year(el.get_text(strip=True))
-                if year:
-                    current_year = year
+        # Structure: <p><strong>Name 'YY</strong><br/>Position<br/>PhD info</p>
+        # Year embedded in name as 'YY (two-digit year)
+        for p in soup.find_all("p"):
+            strong = p.find("strong")
+            if not strong:
                 continue
 
-            if el.name == "table":
-                for tr in el.select("tr"):
-                    tds = tr.select("td")
-                    if len(tds) >= 2:
-                        raw_name = tds[0].get_text(strip=True)
-                        raw_placement = tds[1].get_text(strip=True)
-                        if not raw_name or raw_name.lower() in ("name", "student"):
-                            continue
-                        year = None
-                        if len(tds) >= 3:
-                            year = parse_year(tds[2].get_text(strip=True))
-                        rows.append(
-                            PlacementRow(
-                                raw_name=raw_name,
-                                raw_field=None,
-                                raw_placement=raw_placement,
-                                raw_position=None,
-                                graduation_year=year or current_year,
-                                row_index=global_index,
-                            )
-                        )
-                        global_index += 1
+            strong_text = strong.get_text(strip=True)
+            # Extract year from 'YY pattern
+            year_match = re.search(r"['\u2018\u2019](\d{2})", strong_text)
+            if not year_match:
+                continue
 
-            elif el.name in ("ul", "ol") and current_year is not None:
-                for li in el.find_all("li", recursive=False):
-                    text = li.get_text(strip=True)
-                    if not text:
-                        continue
-                    bold = li.find(["strong", "b"])
-                    if bold:
-                        raw_name = bold.get_text(strip=True)
-                        remainder = text[len(raw_name) :].strip()
-                        remainder = re.sub(r"^[\s,\-–—:]+", "", remainder).strip()
-                    else:
-                        parts = re.split(r"\s*[–—-]\s*", text, maxsplit=1)
-                        raw_name = parts[0].strip()
-                        remainder = parts[1].strip() if len(parts) > 1 else ""
-                    if not raw_name:
-                        continue
-                    rows.append(
-                        PlacementRow(
-                            raw_name=raw_name,
-                            raw_field=None,
-                            raw_placement=remainder or None,
-                            raw_position=None,
-                            graduation_year=current_year,
-                            row_index=global_index,
-                        )
-                    )
-                    global_index += 1
+            year_suffix = int(year_match.group(1))
+            graduation_year = 1900 + year_suffix if year_suffix > 50 else 2000 + year_suffix
+
+            # Extract name (everything before the 'YY)
+            raw_name = strong_text[: year_match.start()].strip()
+            if not raw_name:
+                continue
+
+            # Get placement from the lines after the name
+            lines = p.get_text(separator="\n", strip=True).split("\n")
+            lines = [ln.strip() for ln in lines if ln.strip()]
+
+            raw_placement = None
+            raw_position = None
+            # Skip first line (name), take second line as position/placement
+            if len(lines) > 1:
+                placement_text = lines[1]
+                # Skip "PhD in..." lines
+                if not placement_text.lower().startswith("phd"):
+                    raw_placement = placement_text
+
+            # If first non-name line was PhD info, try the next
+            if not raw_placement and len(lines) > 2:
+                for line in lines[1:]:
+                    if not line.lower().startswith("phd"):
+                        raw_placement = line
+                        break
+
+            rows.append(
+                PlacementRow(
+                    raw_name=raw_name,
+                    raw_field=None,
+                    raw_placement=raw_placement,
+                    raw_position=raw_position,
+                    graduation_year=graduation_year,
+                    row_index=global_index,
+                )
+            )
+            global_index += 1
 
         log.info("Parsed %d placement rows from Brandeis", len(rows))
         return rows
