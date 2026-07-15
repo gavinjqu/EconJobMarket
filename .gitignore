@@ -15,3 +15,15 @@ build/
 
 # Environment
 .env
+
+.claude
+
+# SQLite sidecar files — never commit these: a checkout that pairs the .db
+# with a stale WAL can present pre-migration state or corrupt the database.
+*.db-wal
+*.db-shm
+
+# Migration backups (~30MB each)
+data/backups/
+
+docs/
