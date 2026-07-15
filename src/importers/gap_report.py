@@ -37,7 +37,8 @@ def run_gap_report():
                        MIN(p.graduation_year) AS min_year,
                        MAX(p.graduation_year) AS max_year
                 FROM source_university u
-                LEFT JOIN placement p ON p.university_id = u.university_id
+                LEFT JOIN program pr ON pr.university_id = u.university_id
+                LEFT JOIN placement p ON p.program_id = pr.program_id
                 GROUP BY u.university_id, u.name
                 ORDER BY cnt DESC
             """).fetchall()

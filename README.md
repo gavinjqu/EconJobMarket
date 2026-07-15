@@ -2,6 +2,8 @@
 
 Scrapes economics PhD placement pages from top US universities and loads the data into a 3-layer SQLite pipeline (raw → staging → core). Built for analyzing hiring trends, sector breakdowns, and placement outcomes across programs and years.
 
+The unit of analysis is the **PhD program**, not the university — schools like Penn (Wharton Applied Economics vs. SAS Economics) or Berkeley (Economics vs. ARE) run several PhD-granting programs with separate placement records. Every university has a default `Economics PhD` program; named programs are seeded from `config/programs.csv`. Full schema rationale: [docs/DESIGN-v2-programs-faculty.md](docs/DESIGN-v2-programs-faculty.md).
+
 **Current coverage:** 75 universities (top US economics PhD programs per [US News 2025 rankings](https://www.usnews.com/best-graduate-schools/top-humanities-schools/economics-rankings)).
 
 **Tech stack:** Python 3, SQLite, BeautifulSoup, requests, uv
@@ -15,10 +17,10 @@ sqlite3 data/placements.db
 ```
 
 ```sql
--- Browse recent placements
-SELECT candidate_name, university_name, graduation_year,
+-- Browse recent placements (v_placement joins in university/program names)
+SELECT candidate_name, university_name, program_slug, graduation_year,
        placement_institution, placement_sector
-FROM placement
+FROM v_placement
 ORDER BY graduation_year DESC
 LIMIT 20;
 ```
@@ -35,15 +37,22 @@ LIMIT 20;
 # Install Python dependencies
 uv sync
 
-# Initialize the database (creates data/placements.db with schema + seed data)
+# Create the database (or bring an existing one to the current schema version)
 uv run python -m src init-db
+```
+
+Schema changes ship as versioned migrations (`src/migrations/`). When the code
+is newer than your database file:
+
+```bash
+uv run python -m src migrate    # backs up to data/backups/ first, then migrates
 ```
 
 ### Run the scraper
 
 ```bash
-uv run python -m src scrape harvard          # Scrape Harvard only
-uv run python -m src scrape all              # Scrape all 75 universities
+uv run python -m src scrape harvard          # Scrape one program (slug)
+uv run python -m src scrape all              # Scrape all registered parsers
 uv run python -m src scrape harvard --dry-run  # Fetch & parse without writing to DB
 ```
 
@@ -54,9 +63,24 @@ uv run python -m src import econphdplacements          # Import from econphdplac
 uv run python -m src import econphdplacements --dry-run # Preview without writing
 ```
 
-## Database Schema
+### Curate data
 
-All tables live in `data/placements.db`. Data flows through three layers:
+```bash
+# Register named programs (Wharton, Berkeley ARE, ...) from config/programs.csv
+uv run python -m src seed-programs
+
+# Correct a scraped placement; the row is locked so re-scrapes can't undo it
+uv run python -m src placement edit 1234 --set placement_sector=academic
+uv run python -m src placement edit 1234 --set "placement_position=Assistant Professor"
+uv run python -m src placement edit 1234 --unlock   # allow scrape updates again
+```
+
+Every correction is recorded in `verification_event` with before/after values.
+
+## Database Schema (v2)
+
+All tables live in `data/placements.db`; the schema version is recorded in
+`schema_migration`. Data flows through three layers:
 
 ```
 Fetch HTML ──► raw_fetch ──► Parse ──► stg_placement ──► Clean ──► placement
@@ -66,194 +90,78 @@ Fetch HTML ──► raw_fetch ──► Parse ──► stg_placement ──►
           (exact responses)       (parsed, uncleaned)     (cleaned, deduplicated)
 ```
 
-### Raw Layer
+Three invariants keep the layers honest:
 
-#### `source_university`
+1. **Raw values are immutable.** `stg_placement` is append-only history;
+   `placement.field_of_study_raw` is the verbatim (whitespace-cleaned) scrape
+   value and is never canonicalized in place.
+2. **Human corrections outrank scrapes.** `placement edit` sets
+   `human_locked = 1`; the scraper's upsert carries
+   `WHERE placement.human_locked = 0`, so a re-scrape structurally cannot
+   clobber a hand-verified row. Every correction lands in `verification_event`.
+3. **Core tables carry no denormalized display names.** Query `v_placement`
+   for human-readable output; it joins program and university names in.
 
-Master list of universities.
+### Tables
 
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| `university_id` | `integer` | NO | Primary key |
-| `name` | `text` | NO | Full university name |
-| `domain` | `text` | YES | Department website domain |
-| `country` | `text` | YES | Country code |
-| `state` | `text` | YES | US state abbreviation |
-| `created_at` | `text` | NO | Row creation timestamp |
+| Table | Layer | What it holds |
+|---|---|---|
+| `source_university` | reference | One row per university |
+| `program` | reference | PhD programs (1 university : N programs). `slug` is the CLI/parser handle; exactly one `is_default = 1` program per university |
+| `source_page` | reference | URLs to scrape per program (`page_type`: `placement` or `directory`) |
+| `ingest_run` | raw | One row per scrape/import run (timestamps, git SHA) |
+| `raw_fetch` | raw | Full HTTP response for every fetched page |
+| `stg_placement` | staging | Parsed, uncleaned rows exactly as extracted (append-only; carries `program_id`) |
+| `placement` | core | Cleaned, deduplicated placements keyed to `program_id` |
+| `verification_event` | audit | Before/after JSON for every human correction |
+| `schema_migration` | meta | Applied migration versions |
+| `migration_conflict` | meta | Full JSON of any row a migration dropped (nothing is silently deleted) |
 
-Example:
+### `placement` (core)
 
-| university_id | name | domain | country | state |
-|---------------|------|--------|---------|-------|
-| 1 | Harvard University | economics.harvard.edu | US | MA |
-| 2 | Stanford University | economics.stanford.edu | US | CA |
+| Column | Type | Notes |
+|--------|------|-------|
+| `placement_id` | integer | Primary key |
+| `stg_placement_id` | integer | FK → stg_placement (NULL for imports) |
+| `program_id` | integer | FK → program, NOT NULL |
+| `candidate_name` | text | NOT NULL, non-empty |
+| `graduation_year` | integer | NULL or 1950–2100 |
+| `field_of_study_raw` | text | Verbatim scraped field string |
+| `placement_institution` | text | NOT NULL, non-empty |
+| `placement_position` | text | |
+| `placement_sector` | text | `academic` / `private` / `government` / `other` |
+| `is_postdoc` | integer | 0/1 |
+| `human_locked` | integer | 1 = hand-corrected; scrape upserts skip this row |
+| `created_at`, `updated_at` | text | `updated_at` maintained by trigger |
 
-#### `source_page`
+Deduplication key (unique **expression** index, because SQLite treats NULLs as
+pairwise-distinct in plain UNIQUE constraints — the v1 key silently admitted
+1,261 duplicate NULL-year rows, archived in `migration_conflict` during the v2
+migration):
 
-URLs to scrape per university.
+```sql
+CREATE UNIQUE INDEX ux_placement_natkey ON placement
+    (program_id, candidate_name, COALESCE(graduation_year, -1), placement_institution);
+```
 
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| `page_id` | `integer` | NO | Primary key |
-| `university_id` | `integer` | NO | FK → source_university |
-| `page_type` | `text` | NO | Page category (e.g., `placement`) |
-| `url` | `text` | NO | Full URL to scrape |
-| `is_dynamic` | `integer` | NO | Whether JS rendering is needed |
-| `robots_allowed` | `integer` | YES | robots.txt compliance flag |
-| `created_at` | `text` | NO | Row creation timestamp |
+### Views
 
-Example:
-
-| page_id | university_id | page_type | url | is_dynamic |
-|---------|---------------|-----------|-----|------------|
-| 1 | 1 | placement | https://economics.harvard.edu/placement | false |
-| 2 | 2 | placement | https://economics.stanford.edu/graduate/student-placement | false |
-
-#### `ingest_run`
-
-Tracks each scrape or import run.
-
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| `run_id` | `integer` | NO | Primary key |
-| `started_at` | `text` | NO | When the run started |
-| `finished_at` | `text` | YES | When the run finished |
-| `git_sha` | `text` | YES | Git commit SHA at scrape time |
-| `notes` | `text` | YES | Run metadata (e.g., `scrape:harvard`) |
-
-Example:
-
-| run_id | started_at | finished_at | git_sha | notes |
-|--------|------------|-------------|---------|-------|
-| 1 | 2026-02-19 05:10:28 | 2026-02-19 05:10:29 | b9227cc | scrape:harvard |
-| 2 | 2026-02-19 05:10:29 | 2026-02-19 05:10:57 | b9227cc | scrape:stanford |
-
-#### `raw_fetch`
-
-Full HTTP response for each fetched page.
-
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| `fetch_id` | `integer` | NO | Primary key |
-| `run_id` | `integer` | NO | FK → ingest_run |
-| `page_id` | `integer` | NO | FK → source_page |
-| `fetched_at` | `text` | NO | Fetch timestamp |
-| `status_code` | `integer` | YES | HTTP status code |
-| `content_type` | `text` | YES | Response Content-Type header |
-| `body_text` | `text` | YES | Full HTML response body |
-| `body_hash` | `text` | YES | SHA-256 hash of body_text |
-| `error` | `text` | YES | Error message if fetch failed |
-
-Example:
-
-| fetch_id | run_id | page_id | status_code | content_type | body_hash | error |
-|----------|--------|---------|-------------|--------------|-----------|-------|
-| 1 | 1 | 1 | 200 | text/html; charset=UTF-8 | 4075fa67... | NULL |
-| 2 | 2 | 2 | 200 | text/html; charset=UTF-8 | b9948c2d... | NULL |
-
-### Staging Layer
-
-#### `stg_placement`
-
-Parsed but uncleaned placement records. Raw values are preserved exactly as extracted from HTML for debugging parser issues without re-fetching.
-
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| `stg_placement_id` | `integer` | NO | Primary key |
-| `fetch_id` | `integer` | YES | FK → raw_fetch (NULL for imports) |
-| `university_id` | `integer` | YES | FK → source_university |
-| `raw_name` | `text` | YES | Candidate name as scraped |
-| `raw_field` | `text` | YES | Field of study as scraped |
-| `raw_placement` | `text` | YES | Placement institution as scraped |
-| `raw_position` | `text` | YES | Position title as scraped |
-| `raw_sector` | `text` | YES | Sector label as scraped |
-| `graduation_year` | `integer` | YES | Graduation/placement year |
-| `row_index` | `integer` | YES | Position on the source page |
-| `parsed_at` | `text` | YES | When this row was parsed |
-| `parse_error` | `text` | YES | Error message if parsing failed |
-
-Example:
-
-| stg_placement_id | fetch_id | university_id | raw_name | raw_placement | graduation_year | row_index |
-|------------------|----------|---------------|----------|---------------|-----------------|-----------|
-| 1 | 1 | 1 | Constanza Abuin | John Hopkins University | 2025 | 0 |
-| 2 | 1 | 1 | Maxim Alekseev | Hong Kong University of Science and Technology | 2025 | 1 |
-
-### Core Layer
-
-#### `placement`
-
-Cleaned, deduplicated, query-ready placement records. Deduplication key: `UNIQUE (university_id, candidate_name, graduation_year, placement_institution)`. Subsequent runs upsert existing records.
-
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| `placement_id` | `integer` | NO | Primary key |
-| `stg_placement_id` | `integer` | YES | FK → stg_placement |
-| `university_id` | `integer` | YES | FK → source_university |
-| `university_name` | `text` | YES | Denormalized university name |
-| `candidate_name` | `text` | YES | Cleaned candidate name |
-| `graduation_year` | `integer` | YES | Graduation/placement year |
-| `field_of_study` | `text` | YES | Normalized field of study |
-| `placement_institution` | `text` | YES | Cleaned institution name |
-| `placement_position` | `text` | YES | Cleaned position title |
-| `placement_sector` | `text` | YES | Classified sector (`academic`, `private`, `government`, `other`) |
-| `is_postdoc` | `integer` | YES | Whether this is a postdoc placement |
-| `created_at` | `text` | YES | Row creation timestamp |
-| `updated_at` | `text` | YES | Last update timestamp |
-
-Example:
-
-| placement_id | university_name | candidate_name | graduation_year | placement_institution | placement_sector | is_postdoc |
-|--------------|-----------------|----------------|-----------------|----------------------|-----------------|------------|
-| 8 | Harvard University | Leonardo D'Amico | 2025 | University of Chicago Booth School of Business | academic | false |
-| 13 | Harvard University | Martin Koenen | 2025 | IIES Stockholm | other | false |
+| View | Purpose |
+|---|---|
+| `v_placement` | Display: placements with university/program names joined in |
+| `v_universities_without_default` | QC: every university must keep exactly one default program |
+| `v_cross_program_dupes` | QC: identical placements appearing under two programs of one university (re-attribution double-count guard) |
 
 ### Entity-Relationship Diagram
 
 ```
-source_university ─────┐
-  PK university_id     │
-  name                 │
-  domain               │1
-  country              ├──────────── source_page
-  state                │               PK page_id
-                       │               FK university_id
-                       │               page_type
-                       │               url
-                       │               is_dynamic
-                       │
-                       │            ingest_run
-                       │              PK run_id
-                       │              started_at
-                       │              finished_at
-                       │              git_sha
-                       │
-                       │1           raw_fetch
-                       ├──┐          PK fetch_id
-                       │  │          FK run_id ──────► ingest_run
-                       │  │          FK page_id ─────► source_page
-                       │  │          status_code
-                       │  │          body_text
-                       │  │          body_hash
-                       │  │
-                       │  │1       stg_placement
-                       │  └───────── PK stg_placement_id
-                       │             FK fetch_id ────► raw_fetch
-                       │  ┌───────── FK university_id
-                       │  │          raw_name
-                       │  │          raw_field
-                       │  │          raw_placement
-                       │  │          graduation_year
-                       │  │
-                       │  │1       placement
-                       │  └───────── PK placement_id
-                       │             FK stg_placement_id ► stg_placement
-                       └──────────── FK university_id
-                                     candidate_name
-                                     graduation_year
-                                     placement_institution
-                                     placement_sector
-                                     is_postdoc
+source_university 1──N program 1──N source_page 1──N raw_fetch N──1 ingest_run
+                            │                            │
+                            │ 1                          │ 1
+                            │                            │
+                            N                            N
+                       placement N──1 stg_placement ─────┘
+                       (program_id)   (program_id, university_id lineage)
 ```
 
 ## Querying the Data
@@ -267,7 +175,7 @@ sqlite3 data/placements.db
 ```sql
 SELECT candidate_name, university_name, graduation_year,
        placement_institution, placement_position, placement_sector
-FROM placement
+FROM v_placement
 ORDER BY graduation_year DESC, candidate_name
 LIMIT 20 OFFSET 0;
 ```
@@ -276,7 +184,7 @@ LIMIT 20 OFFSET 0;
 
 ```sql
 SELECT university_name, graduation_year, COUNT(*) AS placements
-FROM placement
+FROM v_placement
 GROUP BY university_name, graduation_year
 ORDER BY university_name, graduation_year DESC;
 ```
@@ -286,7 +194,7 @@ ORDER BY university_name, graduation_year DESC;
 ```sql
 SELECT placement_sector, COUNT(*) AS n,
        ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) AS pct
-FROM placement
+FROM v_placement
 GROUP BY placement_sector
 ORDER BY n DESC;
 ```
@@ -296,7 +204,7 @@ ORDER BY n DESC;
 ```sql
 SELECT candidate_name, university_name, graduation_year,
        placement_institution, placement_position
-FROM placement
+FROM v_placement
 WHERE candidate_name LIKE '%smith%';
 ```
 
@@ -305,7 +213,7 @@ WHERE candidate_name LIKE '%smith%';
 ```sql
 SELECT candidate_name, university_name, graduation_year,
        placement_institution, placement_position
-FROM placement
+FROM v_placement
 WHERE is_postdoc = 1
 ORDER BY graduation_year DESC;
 ```
@@ -314,7 +222,7 @@ ORDER BY graduation_year DESC;
 
 ```sql
 SELECT placement_institution, COUNT(*) AS hires
-FROM placement
+FROM v_placement
 WHERE placement_institution IS NOT NULL
 GROUP BY placement_institution
 ORDER BY hires DESC
@@ -329,7 +237,7 @@ SELECT graduation_year,
        SUM(CASE WHEN placement_sector = 'private' THEN 1 ELSE 0 END) AS private,
        SUM(CASE WHEN placement_sector = 'government' THEN 1 ELSE 0 END) AS government,
        COUNT(*) AS total
-FROM placement
+FROM v_placement
 WHERE graduation_year IS NOT NULL
 GROUP BY graduation_year
 ORDER BY graduation_year DESC;

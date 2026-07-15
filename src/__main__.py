@@ -23,6 +23,24 @@ def _load_config_slugs():
     return slugs
 
 
+def _parse_set_args(pairs: list[str]) -> dict:
+    """Parse repeated --set field=value arguments. 'null' clears a field."""
+    changes = {}
+    for pair in pairs:
+        if "=" not in pair:
+            raise SystemExit(f"--set expects field=value, got: {pair}")
+        field, _, value = pair.partition("=")
+        field = field.strip()
+        value = value.strip()
+        if value.lower() == "null" or value == "":
+            changes[field] = None
+        elif field in ("graduation_year", "is_postdoc"):
+            changes[field] = int(value)
+        else:
+            changes[field] = value
+    return changes
+
+
 def main():
     logging.basicConfig(
         level=logging.INFO,
@@ -38,8 +56,8 @@ def main():
     # --- scrape ---
     sp_scrape = sub.add_parser("scrape", help="Scrape placement data")
     sp_scrape.add_argument(
-        "university",
-        help="University slug or 'all'",
+        "program",
+        help="Program slug or 'all' (default programs use the university slug)",
     )
     sp_scrape.add_argument(
         "--dry-run",
@@ -60,8 +78,36 @@ def main():
         help="Show what would be imported without DB writes",
     )
 
-    # --- init-db ---
-    sub.add_parser("init-db", help="Initialize SQLite database and seed data")
+    # --- init-db / migrate (same runner; two names for the two intents) ---
+    sub.add_parser("init-db", help="Create the database and apply all migrations")
+    sub.add_parser("migrate", help="Apply pending schema migrations (backs up first)")
+
+    # --- seed-programs ---
+    sub.add_parser(
+        "seed-programs",
+        help="Idempotently load named programs + pages from config/programs.csv",
+    )
+
+    # --- placement (curation) ---
+    sp_placement = sub.add_parser("placement", help="Curate core placement rows")
+    placement_sub = sp_placement.add_subparsers(dest="placement_command", required=True)
+    sp_edit = placement_sub.add_parser(
+        "edit",
+        help="Correct a placement row; sets human_locked so scrapes can't clobber it",
+    )
+    sp_edit.add_argument("placement_id", type=int)
+    sp_edit.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="FIELD=VALUE",
+        help="Field to change (repeatable). Use value 'null' to clear.",
+    )
+    sp_edit.add_argument(
+        "--unlock",
+        action="store_true",
+        help="Clear human_locked so scrape upserts may update the row again",
+    )
 
     # --- generate ---
     sp_gen = sub.add_parser("generate", help="Generate a parser via LLM")
@@ -83,7 +129,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "scrape":
-        slug = args.university
+        slug = args.program
         if slug != "all" and slug not in PARSERS:
             parser.error(
                 f"Unknown parser '{slug}'. Available: {', '.join(sorted(PARSERS))} or 'all'"
@@ -100,11 +146,33 @@ def main():
 
             run_gap_report()
 
-    elif args.command == "init-db":
+    elif args.command in ("init-db", "migrate"):
         from src.database import init_db
 
         init_db()
-        log.info("Database initialized at data/placements.db")
+        log.info("Database is at the current schema version (data/placements.db)")
+
+    elif args.command == "seed-programs":
+        from src.database import get_conn, seed_programs
+
+        with get_conn() as conn:
+            created, pages = seed_programs(conn)
+        log.info("Seeded %d new programs and %d new pages", created, pages)
+
+    elif args.command == "placement":
+        from src.database import edit_placement, get_conn
+
+        changes = _parse_set_args(args.set)
+        with get_conn() as conn:
+            before, after = edit_placement(conn, args.placement_id, changes, unlock=args.unlock)
+        for field in sorted(set(changes) | {"human_locked"}):
+            log.info(
+                "placement %d: %s: %r -> %r",
+                args.placement_id,
+                field,
+                before.get(field),
+                after.get(field),
+            )
 
     elif args.command == "generate":
         if args.batch:

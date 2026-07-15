@@ -2,7 +2,9 @@
 
 Downloads the JSONL from the site (or reads a cached local copy),
 maps fields to our stg_placement schema, and runs the staging→core
-transform.
+transform. Records land in each university's default program (the external
+dataset is department-level; its department_id values match our
+universities.csv slugs, which default programs adopt).
 
 Usage:
     python -m src import econphdplacements [--dry-run]
@@ -16,9 +18,10 @@ import pathlib
 import requests
 
 from src.database import (
+    ensure_ready,
     finish_ingest_run,
     get_conn,
-    get_university_by_name,
+    get_program_by_slug,
     get_unprocessed_staging,
     insert_ingest_run,
     insert_placement,
@@ -70,19 +73,19 @@ def _download_jsonl() -> pathlib.Path:
     return _CACHE_FILE
 
 
-def _resolve_university_ids(conn, config: dict) -> dict[str, tuple[int, str]]:
-    """Map external department_id → (university_id, name) from our DB.
+def _resolve_programs(conn, config: dict) -> dict[str, tuple[int, int]]:
+    """Map external department_id → (program_id, university_id).
 
-    Uses the university name from config for an exact match against the DB.
-    Only includes slugs that exist in both our config and the database.
+    department_id values equal our universities.csv slugs, which each
+    university's default program adopts.
     """
     mapping = {}
-    for slug, row in config.items():
-        result = get_university_by_name(conn, row["name"])
-        if result:
-            mapping[slug] = result
+    for slug in config:
+        program = get_program_by_slug(conn, slug)
+        if program:
+            mapping[slug] = (program[0], program[1])
         else:
-            log.debug("No DB entry for '%s' (%s)", slug, row["name"])
+            log.debug("No program for slug '%s'", slug)
     return mapping
 
 
@@ -117,15 +120,17 @@ def run_import(dry_run: bool = False):
             log.info("  %-20s %d records", slug, counts[slug])
         return
 
-    # Resolve university_ids from database
-    with get_conn() as conn:
-        uni_map = _resolve_university_ids(conn, config)
+    ensure_ready()
 
-    if not uni_map:
-        log.error("No universities found in database. Run seed SQL first.")
+    # Resolve programs from database
+    with get_conn() as conn:
+        program_map = _resolve_programs(conn, config)
+
+    if not program_map:
+        log.error("No programs found in database. Run: python -m src migrate")
         return
 
-    log.info("Resolved %d universities from database", len(uni_map))
+    log.info("Resolved %d programs from database", len(program_map))
 
     # Create ingest run
     with get_conn() as conn:
@@ -138,11 +143,11 @@ def run_import(dry_run: bool = False):
     with get_conn() as conn:
         for i, rec in enumerate(records):
             dept = rec["department_id"]
-            if dept not in uni_map:
+            if dept not in program_map:
                 skipped += 1
                 continue
 
-            university_id, _ = uni_map[dept]
+            program_id, university_id = program_map[dept]
             category = rec.get("category") or ""
             raw_sector = _CATEGORY_MAP.get(category, "other")
 
@@ -150,6 +155,7 @@ def run_import(dry_run: bool = False):
                 conn,
                 fetch_id=None,
                 university_id=university_id,
+                program_id=program_id,
                 raw_name=rec.get("name") or "",
                 raw_field=rec.get("field"),
                 raw_placement=rec.get("placement"),
@@ -165,19 +171,18 @@ def run_import(dry_run: bool = False):
     # Transform staging → core
     with get_conn() as conn:
         unprocessed = get_unprocessed_staging(conn, run_id)
-        core_count = 0
+        core_count = locked_count = 0
         for row in unprocessed:
             (
                 stg_id,
                 fetch_id,
-                uni_id,
+                program_id,
                 raw_name,
                 raw_field,
                 raw_placement,
                 raw_position,
                 raw_sector,
                 grad_year,
-                uni_name,
             ) = row
 
             candidate = clean_name(raw_name)
@@ -193,11 +198,10 @@ def run_import(dry_run: bool = False):
             postdoc = detect_postdoc(institution, position)
 
             if candidate and institution:
-                insert_placement(
+                placement_id = insert_placement(
                     conn,
                     stg_id,
-                    uni_id,
-                    uni_name,
+                    program_id,
                     candidate,
                     grad_year,
                     field,
@@ -206,10 +210,17 @@ def run_import(dry_run: bool = False):
                     sector,
                     postdoc,
                 )
-                core_count += 1
+                if placement_id is None:
+                    locked_count += 1  # human-corrected row; import may not touch
+                else:
+                    core_count += 1
             else:
                 log.warning("Skipping stg_id=%d: missing name or placement", stg_id)
-        log.info("Inserted/updated %d core placement rows", core_count)
+        log.info(
+            "Inserted/updated %d core placement rows (%d locked rows left untouched)",
+            core_count,
+            locked_count,
+        )
 
     # Finish ingest run
     with get_conn() as conn:
